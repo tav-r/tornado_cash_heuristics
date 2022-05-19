@@ -6,7 +6,9 @@ use web3::types::{H160, H256};
 pub trait ESTransaction {
     fn transaction_hash(&self) -> H256;
     fn transaction_value(&self) -> u128;
+    fn transaction_from(&self) -> H160;
     fn transaction_to(&self) -> Option<H160>;
+    fn transaction_blocknumber(&self) -> u128;
 }
 
 #[allow(non_snake_case)]

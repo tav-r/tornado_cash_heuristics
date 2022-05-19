@@ -10,7 +10,7 @@ use analysis::{
 
 use data::{
     ESInternalTransaction, ESInternalTransactionStrings, ESNormalTransaction,
-    ESNormalTransactionStrings,
+    ESNormalTransactionStrings, ESTransaction,
 };
 
 use helpers::parse_file;
@@ -94,6 +94,43 @@ fn main() {
     );
 
     // address match
+    let check_deposits: Vec<&dyn ESTransaction> = normal_deposits
+        .iter()
+        .map(|t| *t as &dyn ESTransaction)
+        .chain(internal_received.iter().map(|t| *t as &dyn ESTransaction))
+        .collect();
+
+    let check_withdraws: Vec<&dyn ESTransaction> = normal_withdraws
+        .iter()
+        .map(|t| *t as &dyn ESTransaction)
+        .chain(internal_withdraws.iter().map(|t| match t {
+            Withdraw::WithoutRelayer(w) => *w as &dyn ESTransaction,
+            Withdraw::WithRelayer(_, w) => *w as &dyn ESTransaction,
+        }))
+        .collect();
+
+    let res: Vec<(&dyn ESTransaction, &dyn ESTransaction)> = check_deposits
+        .iter()
+        .map(|d| {
+            check_withdraws
+                .iter()
+                .filter(|w| {
+                    w.transaction_blocknumber() >= d.transaction_blocknumber()
+                        && d.transaction_from() == w.transaction_to().unwrap()
+                })
+                .map(|w| (*d, *w))
+        })
+        .flatten()
+        .collect();
+
+    res.iter().for_each(|(dep, wit)| {
+        println!(
+            "deposit at {}, withdraw at {}, address: {}",
+            hashstring!(dep.transaction_hash()),
+            hashstring!(wit.transaction_hash()),
+            hashstring!(dep.transaction_from())
+        )
+    });
 
     // unique gas price
 

@@ -32,4 +32,5 @@ const WITHDRAW_SIGNATURE: [ParamType; 7] = [
 
 const DEPOSIT_SIGNATURE: [ParamType; 1] = [ParamType::FixedBytes(32)];
 
+pub mod analyze;
 pub mod prepare;

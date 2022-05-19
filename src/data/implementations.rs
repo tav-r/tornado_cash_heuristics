@@ -16,6 +16,30 @@ impl ESTransaction for ESInternalTransaction {
     fn transaction_to(&self) -> Option<H160> {
         Some(self.to)
     }
+    fn transaction_from(&self) -> H160 {
+        self.from
+    }
+    fn transaction_blocknumber(&self) -> u128 {
+        self.blockNumber
+    }
+}
+
+impl ESTransaction for ESNormalTransaction {
+    fn transaction_hash(&self) -> H256 {
+        self.hash
+    }
+    fn transaction_value(&self) -> u128 {
+        self.value
+    }
+    fn transaction_to(&self) -> Option<H160> {
+        self.to
+    }
+    fn transaction_from(&self) -> H160 {
+        self.from
+    }
+    fn transaction_blocknumber(&self) -> u128 {
+        self.blockNumber
+    }
 }
 
 impl PartialEq for ESInternalTransaction {
@@ -69,18 +93,6 @@ impl TryInto<ESInternalTransaction> for ESInternalTransactionStrings {
                 Some(self.errCode.parse()?)
             },
         })
-    }
-}
-
-impl ESTransaction for ESNormalTransaction {
-    fn transaction_hash(&self) -> H256 {
-        self.hash
-    }
-    fn transaction_value(&self) -> u128 {
-        self.value
-    }
-    fn transaction_to(&self) -> Option<H160> {
-        self.to
     }
 }
 
