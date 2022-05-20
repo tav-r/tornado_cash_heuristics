@@ -61,6 +61,30 @@ impl PartialEq for ESInternalTransaction {
     }
 }
 
+impl PartialEq for ESNormalTransaction {
+    fn eq(&self, other: &Self) -> bool {
+        self.blockNumber == other.blockNumber
+            && self.timeStamp == other.timeStamp
+            && self.hash == other.hash
+            && self.from == other.from
+            && self.to == other.to
+            && self.value == other.value
+            && self.contractAddress == other.contractAddress
+            && self.input == other.input
+            && self.gas == other.gas
+            && self.gasUsed == other.gasUsed
+            && self.isError == other.isError
+            && self.txreceipt_status == other.txreceipt_status
+            && self.transactionIndex == other.transactionIndex
+            && self.blockHash == other.blockHash
+            && self.blockNumber == other.blockNumber
+            && self.confirmations == other.confirmations
+            && self.cumulativeGasUsed == other.cumulativeGasUsed
+            && self.nonce == other.nonce
+            && self.gasPrice == other.gasPrice
+    }
+}
+
 impl TryInto<ESInternalTransaction> for ESInternalTransactionStrings {
     type Error = Box<dyn Error>;
 
@@ -93,30 +117,6 @@ impl TryInto<ESInternalTransaction> for ESInternalTransactionStrings {
                 Some(self.errCode.parse()?)
             },
         })
-    }
-}
-
-impl PartialEq for ESNormalTransaction {
-    fn eq(&self, other: &Self) -> bool {
-        self.blockNumber == other.blockNumber
-            && self.timeStamp == other.timeStamp
-            && self.hash == other.hash
-            && self.from == other.from
-            && self.to == other.to
-            && self.value == other.value
-            && self.contractAddress == other.contractAddress
-            && self.input == other.input
-            && self.gas == other.gas
-            && self.gasUsed == other.gasUsed
-            && self.isError == other.isError
-            && self.txreceipt_status == other.txreceipt_status
-            && self.transactionIndex == other.transactionIndex
-            && self.blockHash == other.blockHash
-            && self.blockNumber == other.blockNumber
-            && self.confirmations == other.confirmations
-            && self.cumulativeGasUsed == other.cumulativeGasUsed
-            && self.nonce == other.nonce
-            && self.gasPrice == other.gasPrice
     }
 }
 
