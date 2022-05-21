@@ -1,7 +1,10 @@
 use super::{
-    ESInternalTransaction, ESInternalTransactionStrings, ESNormalTransaction,
-    ESNormalTransactionStrings, ESTransaction,
+    Deposit, DirectDeposit, DirectWithdraw, ESInternalTransaction, ESInternalTransactionStrings,
+    ESNormalTransaction, ESNormalTransactionStrings, ESTransaction, PoolCall, RouterCall,
+    RouterDeposit, RouterWithdraw, Withdraw, DIRECT_DEPOSIT_SIGNATURE, DIRECT_WITHDRAW_SIGNATURE,
+    ROUTER_DEPOSIT_SIGNATURE, ROUTER_WITHDRAW_SIGNATURE,
 };
+use ethabi::{decode, short_signature, Uint};
 use hex::decode as hex_decode;
 use std::error::Error;
 use web3::types::{H160, H256};
@@ -162,5 +165,131 @@ impl TryInto<ESNormalTransaction> for ESNormalTransactionStrings {
             transactionIndex: self.transactionIndex.parse()?,
             txreceipt_status: self.txreceipt_status.parse()?,
         })
+    }
+}
+
+impl Into<RouterCall> for &[u8] {
+    fn into(self) -> RouterCall {
+        if self.len() >= 4 && self[0..4] == short_signature("withdraw", &ROUTER_WITHDRAW_SIGNATURE)
+        {
+            RouterCall::Withdraw(self[4..].try_into().unwrap())
+        } else if self.len() >= 4
+            && self[0..4] == short_signature("deposit", &ROUTER_DEPOSIT_SIGNATURE)
+        {
+            RouterCall::Deposit(self[4..].try_into().unwrap())
+        } else {
+            RouterCall::Other
+        }
+    }
+}
+
+impl TryInto<RouterDeposit> for &[u8] {
+    type Error = ();
+    fn try_into(self) -> Result<RouterDeposit, ()> {
+        if let Ok(v) = decode(&ROUTER_DEPOSIT_SIGNATURE, &self[..]) {
+            Ok(RouterDeposit {
+                _tornado: v[0].clone().into_address().unwrap(),
+                _commitment: v[1].clone().into_fixed_bytes().unwrap(),
+                _encryptedNote: v[2].clone().into_bytes().unwrap(),
+            })
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryInto<RouterWithdraw> for &[u8] {
+    type Error = ();
+    fn try_into(self) -> Result<RouterWithdraw, ()> {
+        if let Ok(v) = decode(&ROUTER_WITHDRAW_SIGNATURE, &self[..]) {
+            Ok(RouterWithdraw {
+                _tornado: v[0].clone().into_address().unwrap(),
+                _proof: v[1].clone().into_bytes().unwrap(),
+                _root: v[2].clone().into_fixed_bytes().unwrap(),
+                _nullifierHash: v[3].clone().into_fixed_bytes().unwrap(),
+                _recipient: v[4].clone().into_address().unwrap(),
+                _relayer: v[5].clone().into_address().unwrap(),
+                _fee: v[6].clone().into_uint().unwrap(),
+                _refund: v[7].clone().into_uint().unwrap(),
+            })
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl Into<PoolCall> for &[u8] {
+    fn into(self) -> PoolCall {
+        if self.len() >= 4 && self[0..4] == short_signature("withdraw", &ROUTER_WITHDRAW_SIGNATURE)
+        {
+            PoolCall::Withdraw(self[4..].try_into().unwrap())
+        } else if self.len() >= 4
+            && self[0..4] == short_signature("deposit", &ROUTER_DEPOSIT_SIGNATURE)
+        {
+            PoolCall::Deposit(self[4..].try_into().unwrap())
+        } else {
+            PoolCall::Other
+        }
+    }
+}
+
+impl TryInto<DirectDeposit> for &[u8] {
+    type Error = ();
+    fn try_into(self) -> Result<DirectDeposit, ()> {
+        if let Ok(v) = decode(&DIRECT_DEPOSIT_SIGNATURE, &self[..]) {
+            Ok(DirectDeposit {
+                _commitment: v[1].clone().into_fixed_bytes().unwrap(),
+                _encryptedNote: v[2].clone().into_bytes().unwrap(),
+            })
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryInto<DirectWithdraw> for &[u8] {
+    type Error = ();
+    fn try_into(self) -> Result<DirectWithdraw, ()> {
+        if let Ok(v) = decode(&DIRECT_WITHDRAW_SIGNATURE, &self[..]) {
+            Ok(DirectWithdraw {
+                _proof: v[1].clone().into_bytes().unwrap(),
+                _root: v[2].clone().into_fixed_bytes().unwrap(),
+                _nullifierHash: v[3].clone().into_fixed_bytes().unwrap(),
+                _recipient: v[4].clone().into_address().unwrap(),
+                _relayer: v[5].clone().into_address().unwrap(),
+                _fee: v[6].clone().into_uint().unwrap(),
+                _refund: v[7].clone().into_uint().unwrap(),
+            })
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl Deposit {
+    pub fn new(transaction_hash: H256, block_number: u128, from: H160) -> Self {
+        Self {
+            transaction_hash,
+            block_number,
+            from,
+        }
+    }
+}
+
+impl Withdraw {
+    pub fn new(
+        transaction_hash: H256,
+        block_number: u128,
+        receiver: H160,
+        relayer: H160,
+        fee: Uint,
+    ) -> Self {
+        Self {
+            transaction_hash,
+            block_number,
+            receiver,
+            relayer,
+            fee,
+        }
     }
 }

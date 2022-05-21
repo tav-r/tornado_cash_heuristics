@@ -1,19 +1,22 @@
-use super::ESTransaction;
+use crate::data::{Deposit, Withdraw};
 
-pub fn get_address_matches<'a, T: ESTransaction>(
-    deposits: &Vec<&'a T>,
-    withdraws: &Vec<&'a T>,
-) -> Vec<(&'a T, &'a T)> {
+pub fn get_address_matches<'a>(
+    deposits: &'a Vec<Deposit>,
+    withdraws: &'a Vec<Withdraw>,
+) -> Vec<(&'a Deposit, &'a Withdraw)> {
     deposits
         .iter()
         .map(|d| {
             withdraws
                 .iter()
-                .filter(|w| {
-                    w.transaction_blocknumber() >= d.transaction_blocknumber()
-                        && d.transaction_from() == w.transaction_to().unwrap()
+                .filter(|w| w.receiver == w.relayer)
+                .filter_map(move |w| {
+                    if w.block_number >= d.block_number && w.receiver == d.from {
+                        Some((d, w))
+                    } else {
+                        None
+                    }
                 })
-                .map(|w| (*d, *w))
         })
         .flatten()
         .collect()
