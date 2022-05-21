@@ -1,6 +1,8 @@
 mod implementations;
 
+use ethabi::{decode, param_type::ParamType, short_signature, Address as EthtypeAddress, Uint};
 use serde::{Deserialize, Serialize};
+use std::convert::TryInto;
 use web3::types::{H160, H256};
 
 pub trait ESTransaction {
@@ -95,4 +97,93 @@ pub struct ESNormalTransaction {
     pub cumulativeGasUsed: u128,
     pub gasUsed: u128,
     pub confirmations: u128,
+}
+
+const WITHDRAW_SIGNATURE: [ParamType; 8] = [
+    ParamType::Address,
+    ParamType::Bytes,
+    ParamType::FixedBytes(32),
+    ParamType::FixedBytes(32),
+    ParamType::Address,
+    ParamType::Address,
+    ParamType::Uint(256),
+    ParamType::Uint(256),
+];
+
+const DEPOSIT_SIGNATURE: [ParamType; 3] = [
+    ParamType::Address,
+    ParamType::FixedBytes(32),
+    ParamType::Bytes,
+];
+
+pub enum RouterCall {
+    Withdraw(Withdraw),
+    Deposit(Deposit),
+    Other,
+}
+
+impl Into<RouterCall> for &[u8] {
+    fn into(self) -> RouterCall {
+        if self[0..4] == short_signature("withdraw", &WITHDRAW_SIGNATURE) {
+            RouterCall::Withdraw(self[4..].try_into().unwrap())
+        } else if self[0..4] == short_signature("deposit", &DEPOSIT_SIGNATURE) {
+            RouterCall::Deposit(self[4..].try_into().unwrap())
+        } else {
+            RouterCall::Other
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+pub struct Withdraw {
+    pub _tornado: EthtypeAddress,
+    pub _proof: Vec<u8>,
+    pub _root: Vec<u8>,
+    pub _nullifierHash: Vec<u8>,
+    pub _recipient: EthtypeAddress,
+    pub _relayer: EthtypeAddress,
+    pub _fee: Uint,
+    pub _refund: Uint,
+}
+
+#[allow(non_snake_case)]
+pub struct Deposit {
+    pub _tornado: EthtypeAddress,
+    pub _commitment: Vec<u8>,
+    pub _encryptedNote: Vec<u8>,
+}
+
+impl TryInto<Deposit> for &[u8] {
+    type Error = ();
+    fn try_into(self) -> Result<Deposit, ()> {
+        if let Ok(v) = decode(&DEPOSIT_SIGNATURE, &self[..]) {
+            Ok(Deposit {
+                _tornado: v[0].clone().into_address().unwrap(),
+                _commitment: v[1].clone().into_fixed_bytes().unwrap(),
+                _encryptedNote: v[2].clone().into_bytes().unwrap(),
+            })
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryInto<Withdraw> for &[u8] {
+    type Error = ();
+    fn try_into(self) -> Result<Withdraw, ()> {
+        if let Ok(v) = decode(&WITHDRAW_SIGNATURE, &self[..]) {
+            Ok(Withdraw {
+                _tornado: v[0].clone().into_address().unwrap(),
+                _proof: v[1].clone().into_bytes().unwrap(),
+                _root: v[2].clone().into_fixed_bytes().unwrap(),
+                _nullifierHash: v[3].clone().into_fixed_bytes().unwrap(),
+                _recipient: v[4].clone().into_address().unwrap(),
+                _relayer: v[5].clone().into_address().unwrap(),
+                _fee: v[6].clone().into_uint().unwrap(),
+                _refund: v[7].clone().into_uint().unwrap(),
+            })
+        } else {
+            Err(())
+        }
+    }
 }
