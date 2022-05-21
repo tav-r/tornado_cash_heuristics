@@ -22,6 +22,9 @@ impl ESTransaction for ESInternalTransaction {
     fn transaction_blocknumber(&self) -> u128 {
         self.blockNumber
     }
+    fn transaction_is_error(&self) -> u128 {
+        self.isError
+    }
 }
 
 impl ESTransaction for ESNormalTransaction {
@@ -39,6 +42,9 @@ impl ESTransaction for ESNormalTransaction {
     }
     fn transaction_blocknumber(&self) -> u128 {
         self.blockNumber
+    }
+    fn transaction_is_error(&self) -> u128 {
+        self.isError
     }
 }
 

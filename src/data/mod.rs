@@ -9,6 +9,7 @@ pub trait ESTransaction {
     fn transaction_from(&self) -> H160;
     fn transaction_to(&self) -> Option<H160>;
     fn transaction_blocknumber(&self) -> u128;
+    fn transaction_is_error(&self) -> u128;
 }
 
 #[allow(non_snake_case)]

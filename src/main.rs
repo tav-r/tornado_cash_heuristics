@@ -1,6 +1,9 @@
 mod analysis;
 mod data;
+mod data_check;
 mod helpers;
+
+use hex_literal::hex;
 use std::fs::read_to_string;
 
 use analysis::{
@@ -14,6 +17,16 @@ use data::{
 };
 
 use helpers::parse_file;
+
+fn count_withdraw_errors<T: ESTransaction>(withdraws: &Vec<Withdraw<T>>) -> usize {
+    withdraws
+        .iter()
+        .filter(|w| match w {
+            Withdraw::WithoutRelayer(d) => d.transaction_is_error() != 0,
+            Withdraw::WithRelayer(a, b) => a.transaction_is_error() + b.transaction_is_error() != 0,
+        })
+        .count()
+}
 
 fn main() {
     // read and parse history of internal transactions (forwarded by router)
@@ -31,17 +44,8 @@ fn main() {
     // transfers to receivers
     let internal_withdraws = group_fee_withdraws(internal_sent).unwrap();
 
-    // some sanity checks
-    // 1. all received transactions had a value of 1 ETH
-    assert!(internal_received
-        .iter()
-        .all(|t| t.value == 1_000_000_000_000_000_000 || t.isError != 0));
-    // 2. all withdrawals had a total sum of 1 ETH
-    assert!(internal_withdraws.iter().all(|t| match t {
-        Withdraw::WithoutRelayer(t) => t.value == 1_000_000_000_000_000_000 || t.isError != 0,
-        Withdraw::WithRelayer(t, f) =>
-            t.value + f.value == 1_000_000_000_000_000_000 || t.isError != 0,
-    }));
+    assert!(data_check::check_sum_per_deposit(&internal_received));
+    assert!(data_check::check_sum_per_withdraw(&internal_withdraws));
 
     // print some information about the parsed/prepared internal transactions
     println!(
@@ -55,13 +59,7 @@ fn main() {
                 _ => false,
             })
             .count(),
-        internal_withdraws
-            .iter()
-            .filter(|w| match w {
-                Withdraw::WithoutRelayer(d) => d.isError != 0,
-                Withdraw::WithRelayer(a, b) => a.isError + b.isError != 0,
-            })
-            .count()
+        count_withdraw_errors(&internal_withdraws)
     );
 
     // read and parse history of "normal" transactions (calls made by EOAs)
@@ -73,17 +71,17 @@ fn main() {
     normal_transactions.sort_by(|t, t_| t.timeStamp.cmp(&t_.timeStamp));
 
     // Divide transactions into those that have "to" set to the contract and those that have not.
-    // The only transaction that was not to the contract was its creation
-    let (_, normal_received) = divide_to_from(&normal_transactions);
-    assert_eq!(normal_received.len(), 1);
-    println!(
-        "Contract deployment: {}",
-        hashstring!(normal_received.get(0).unwrap().hash)
-    );
+    // The only transaction "from" the contract was its creation
+    let (_, normal_sent) = divide_to_from(&normal_transactions);
+    assert_eq!(normal_sent.len(), 1);
 
     // divide calls into deposit, withdraw and other calls
-    let (normal_deposits, normal_withdraws, others) = divide_withdraw_deposit(&normal_transactions);
+    let (normal_deposits, normal_withdraws, _) = divide_withdraw_deposit(&normal_transactions);
 
+    dbg!(internal_received
+        .iter()
+        .map(|t| t.from == hex!("d90e2f925da726b50c4ed8d0fb90ad053324f31b").into())
+        .count());
     // print some info
     println!(
         "parsed {} directly sent deposits ({} had errors) and {} directly sent withdraws ({} errors)",
@@ -103,9 +101,9 @@ fn main() {
     let check_withdraws: Vec<&dyn ESTransaction> = normal_withdraws
         .iter()
         .map(|t| *t as &dyn ESTransaction)
-        .chain(internal_withdraws.iter().map(|t| match t {
-            Withdraw::WithoutRelayer(w) => *w as &dyn ESTransaction,
-            Withdraw::WithRelayer(_, w) => *w as &dyn ESTransaction,
+        .chain(internal_withdraws.iter().filter_map(|t| match t {
+            Withdraw::WithoutRelayer(_) => None, // filter out direct transactions, they are not considered "errors"
+            Withdraw::WithRelayer(_, w) => Some(*w as &dyn ESTransaction),
         }))
         .collect();
 
