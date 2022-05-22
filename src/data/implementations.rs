@@ -1,14 +1,44 @@
 use super::{
-    Deposit, DirectDeposit, DirectWithdraw, ESInternalTransaction, ESInternalTransactionStrings,
-    ESNormalTransaction, ESNormalTransactionStrings, ESTransaction, PoolCall, RouterCall,
-    RouterDeposit, RouterWithdraw, Withdraw, DIRECT_DEPOSIT_SIGNATURE, DIRECT_WITHDRAW_SIGNATURE,
-    ROUTER_DEPOSIT_SIGNATURE, ROUTER_WITHDRAW_SIGNATURE,
+    Deposit,
+    DirectDeposit,
+    DirectWithdraw, //ESInternalTransaction, ESInternalTransactionStrings,
+    ESNormalTransaction,
+    ESNormalTransactionStrings,
+    ESTransaction,
+    Pool,
+    PoolCall,
+    RouterCall,
+    RouterDeposit,
+    RouterWithdraw,
+    Withdraw,
+    DIRECT_DEPOSIT_SIGNATURE,
+    DIRECT_WITHDRAW_SIGNATURE,
+    ROUTER_DEPOSIT_SIGNATURE,
+    ROUTER_WITHDRAW_SIGNATURE,
+    TORNADO_CASH_0_1ETH,
+    TORNADO_CASH_100ETH,
+    TORNADO_CASH_10ETH,
+    TORNADO_CASH_1ETH,
 };
 use ethabi::{decode, short_signature, Uint};
 use hex::decode as hex_decode;
 use std::error::Error;
 use web3::types::{H160, H256};
 
+// used by Deposit::new(...) and Withdraw::new(...) to assign the Pool enum
+fn pool_by_addr(addr: H160) -> Pool {
+    let addr_bytes: [u8; 20] = addr[..].try_into().unwrap();
+    match addr_bytes {
+        TORNADO_CASH_0_1ETH => Pool::_0_1ETH,
+        TORNADO_CASH_1ETH => Pool::_1ETH,
+        TORNADO_CASH_10ETH => Pool::_10ETH,
+        TORNADO_CASH_100ETH => Pool::_100ETH,
+        _ => Pool::Unknown,
+    }
+}
+
+// Etherscans "internal transactions" are currently not used.
+/*
 impl ESTransaction for ESInternalTransaction {
     fn transaction_hash(&self) -> H256 {
         self.hash
@@ -29,6 +59,7 @@ impl ESTransaction for ESInternalTransaction {
         self.isError
     }
 }
+*/
 
 impl ESTransaction for ESNormalTransaction {
     fn transaction_hash(&self) -> H256 {
@@ -51,6 +82,7 @@ impl ESTransaction for ESNormalTransaction {
     }
 }
 
+/*
 impl PartialEq for ESInternalTransaction {
     fn eq(&self, other: &Self) -> bool {
         self.blockNumber == other.blockNumber
@@ -69,6 +101,7 @@ impl PartialEq for ESInternalTransaction {
             && self.errCode == other.errCode
     }
 }
+*/
 
 impl PartialEq for ESNormalTransaction {
     fn eq(&self, other: &Self) -> bool {
@@ -94,6 +127,7 @@ impl PartialEq for ESNormalTransaction {
     }
 }
 
+/*
 impl TryInto<ESInternalTransaction> for ESInternalTransactionStrings {
     type Error = Box<dyn Error>;
 
@@ -128,6 +162,7 @@ impl TryInto<ESInternalTransaction> for ESInternalTransactionStrings {
         })
     }
 }
+*/
 
 impl TryInto<ESNormalTransaction> for ESNormalTransactionStrings {
     type Error = Box<dyn Error>;
@@ -267,10 +302,11 @@ impl TryInto<DirectWithdraw> for &[u8] {
 }
 
 impl Deposit {
-    pub fn new(transaction_hash: H256, block_number: u128, from: H160) -> Self {
+    pub fn new(transaction_hash: H256, block_number: u128, pool_address: H160, from: H160) -> Self {
         Self {
             transaction_hash,
             block_number,
+            pool: pool_by_addr(pool_address),
             from,
         }
     }
@@ -280,6 +316,7 @@ impl Withdraw {
     pub fn new(
         transaction_hash: H256,
         block_number: u128,
+        pool_address: H160,
         receiver: H160,
         relayer: H160,
         fee: Uint,
@@ -287,6 +324,7 @@ impl Withdraw {
         Self {
             transaction_hash,
             block_number,
+            pool: pool_by_addr(pool_address),
             receiver,
             relayer,
             fee,

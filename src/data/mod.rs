@@ -1,8 +1,14 @@
 mod implementations;
 
 use ethabi::{param_type::ParamType, Address as EthtypeAddress, Uint};
+use hex_literal::hex;
 use serde::{Deserialize, Serialize};
 use web3::types::{H160, H256};
+
+const TORNADO_CASH_0_1ETH: [u8; 20] = hex!("12D66f87A04A9E220743712cE6d9bB1B5616B8Fc");
+const TORNADO_CASH_1ETH: [u8; 20] = hex!("47CE0C6eD5B0Ce3d3A51fdb1C52DC66a7c3c2936");
+const TORNADO_CASH_10ETH: [u8; 20] = hex!("910Cbd523D972eb0a6f4cAe4618aD62622b39DbF");
+const TORNADO_CASH_100ETH: [u8; 20] = hex!("A160cdAB225685dA1d56aa342Ad8841c3b53f291");
 
 pub trait ESTransaction {
     fn transaction_hash(&self) -> H256;
@@ -13,6 +19,7 @@ pub trait ESTransaction {
     fn transaction_is_error(&self) -> u128;
 }
 
+/*
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ESInternalTransactionStrings {
@@ -51,6 +58,7 @@ pub struct ESInternalTransaction {
     pub isError: u128,
     pub errCode: Option<String>,
 }
+*/
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -175,16 +183,29 @@ pub struct RouterDeposit {
     pub _encryptedNote: Vec<u8>,
 }
 
+#[derive(Debug)]
 pub struct Withdraw {
     pub transaction_hash: H256,
     pub block_number: u128,
+    pub pool: Pool,
     pub receiver: H160,
     pub relayer: H160,
     pub fee: Uint,
 }
 
+#[derive(Debug)]
 pub struct Deposit {
     pub transaction_hash: H256,
     pub block_number: u128,
+    pub pool: Pool,
     pub from: H160,
+}
+
+#[derive(Debug)]
+pub enum Pool {
+    _0_1ETH,
+    _1ETH,
+    _10ETH,
+    _100ETH,
+    Unknown,
 }
