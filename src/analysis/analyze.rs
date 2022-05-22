@@ -105,9 +105,10 @@ pub fn match_patterns(
                             if *a == d.from {
                                 match d.pool {
                                     Pool::_0_1ETH => (_0_1ETH + 1, _1ETH, _10ETH, _100ETH),
-                                    Pool::_1ETH => (_0_1ETH + 1, _1ETH, _10ETH, _100ETH),
-                                    Pool::_10ETH => (_0_1ETH + 1, _1ETH, _10ETH, _100ETH),
-                                    Pool::_100ETH => (_0_1ETH + 1, _1ETH, _10ETH, _100ETH),
+                                    Pool::_1ETH => (_0_1ETH, _1ETH + 1, _10ETH, _100ETH),
+                                    Pool::_10ETH => (_0_1ETH, _1ETH, _10ETH + 1, _100ETH),
+                                    Pool::_100ETH => (_0_1ETH, _1ETH, _10ETH, _100ETH + 1),
+                                    Pool::Unknown => (_0_1ETH, _1ETH, _10ETH, _100ETH),
                                 }
                             } else {
                                 (_0_1ETH, _1ETH, _10ETH, _100ETH)
@@ -131,9 +132,10 @@ pub fn match_patterns(
                             if *a == w.receiver {
                                 match w.pool {
                                     Pool::_0_1ETH => (_0_1ETH + 1, _1ETH, _10ETH, _100ETH),
-                                    Pool::_1ETH => (_0_1ETH + 1, _1ETH, _10ETH, _100ETH),
-                                    Pool::_10ETH => (_0_1ETH + 1, _1ETH, _10ETH, _100ETH),
-                                    Pool::_100ETH => (_0_1ETH + 1, _1ETH, _10ETH, _100ETH),
+                                    Pool::_1ETH => (_0_1ETH, _1ETH + 1, _10ETH, _100ETH),
+                                    Pool::_10ETH => (_0_1ETH, _1ETH, _10ETH + 1, _100ETH),
+                                    Pool::_100ETH => (_0_1ETH, _1ETH, _10ETH, _100ETH + 1),
+                                    Pool::Unknown => (_0_1ETH, _1ETH, _10ETH, _100ETH),
                                 }
                             } else {
                                 (_0_1ETH, _1ETH, _10ETH, _100ETH)
@@ -144,4 +146,6 @@ pub fn match_patterns(
             })
         })
         .collect();
+
+    todo![]
 }
