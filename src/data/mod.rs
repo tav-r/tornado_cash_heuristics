@@ -84,7 +84,7 @@ pub struct ESNormalTransactionStrings {
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ESNormalTransaction {
     pub blockNumber: u128,
     pub timeStamp: u128,
