@@ -116,7 +116,7 @@ const DIRECT_WITHDRAW_SIGNATURE: [ParamType; 7] = [
     ParamType::Uint(256),
 ];
 
-const DIRECT_DEPOSIT_SIGNATURE: [ParamType; 2] = [ParamType::FixedBytes(32), ParamType::Bytes];
+const DIRECT_DEPOSIT_SIGNATURE: [ParamType; 1] = [ParamType::FixedBytes(32)];
 
 const ROUTER_WITHDRAW_SIGNATURE: [ParamType; 8] = [
     ParamType::Address,
@@ -173,7 +173,6 @@ pub struct RouterWithdraw {
 #[allow(non_snake_case)]
 pub struct DirectDeposit {
     pub _commitment: Vec<u8>,
-    pub _encryptedNote: Vec<u8>,
 }
 
 #[allow(non_snake_case)]

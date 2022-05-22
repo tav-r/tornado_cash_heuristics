@@ -94,15 +94,28 @@ fn print_results(
 
 fn main() {
     // read and parse history of "normal" transactions (calls made by EOAs)
-    let router_history = read_to_string("history_ext_router").unwrap();
-    let eth1_history = read_to_string("history_ext").unwrap();
+    let router_history = read_to_string("history_router").unwrap();
+    let eth0_1_history = read_to_string("history_0.1ETH").unwrap();
+    let eth1_history = read_to_string("history_1ETH").unwrap();
+    let eth10_history = read_to_string("history_10ETH").unwrap();
+    let eth100_history = read_to_string("history_100ETH").unwrap();
 
     let mut calls: Vec<ESNormalTransaction> = parse_file::<
         ESNormalTransaction,
         ESNormalTransactionStrings,
     >(&router_history)
     .into_iter()
+    .chain(
+        parse_file::<ESNormalTransaction, ESNormalTransactionStrings>(&eth0_1_history).into_iter(),
+    )
     .chain(parse_file::<ESNormalTransaction, ESNormalTransactionStrings>(&eth1_history).into_iter())
+    .chain(
+        parse_file::<ESNormalTransaction, ESNormalTransactionStrings>(&eth10_history).into_iter(),
+    )
+    .chain(
+        parse_file::<ESNormalTransaction, ESNormalTransactionStrings>(&eth100_history).into_iter(),
+    )
+    .filter(|t| t.isError == 0)
     .collect();
 
     // make sure transactions are sorted by timestamp
@@ -134,6 +147,7 @@ fn main() {
         println!("[*] {} pool", p);
         println!("Analysing {} deposits and {} withdraws", d.len(), w.len());
         let res = analysis::analyze::get_address_matches(&d, &w);
+        println!("{} potentially compromised addresses", res.len());
         print_results(res);
     }
 

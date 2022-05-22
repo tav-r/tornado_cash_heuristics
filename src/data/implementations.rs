@@ -255,11 +255,11 @@ impl TryInto<RouterWithdraw> for &[u8] {
 
 impl Into<PoolCall> for &[u8] {
     fn into(self) -> PoolCall {
-        if self.len() >= 4 && self[0..4] == short_signature("withdraw", &ROUTER_WITHDRAW_SIGNATURE)
+        if self.len() >= 4 && self[0..4] == short_signature("withdraw", &DIRECT_WITHDRAW_SIGNATURE)
         {
             PoolCall::Withdraw(self[4..].try_into().unwrap())
         } else if self.len() >= 4
-            && self[0..4] == short_signature("deposit", &ROUTER_DEPOSIT_SIGNATURE)
+            && self[0..4] == short_signature("deposit", &DIRECT_DEPOSIT_SIGNATURE)
         {
             PoolCall::Deposit(self[4..].try_into().unwrap())
         } else {
@@ -273,8 +273,7 @@ impl TryInto<DirectDeposit> for &[u8] {
     fn try_into(self) -> Result<DirectDeposit, ()> {
         if let Ok(v) = decode(&DIRECT_DEPOSIT_SIGNATURE, &self[..]) {
             Ok(DirectDeposit {
-                _commitment: v[1].clone().into_fixed_bytes().unwrap(),
-                _encryptedNote: v[2].clone().into_bytes().unwrap(),
+                _commitment: v[0].clone().into_fixed_bytes().unwrap(),
             })
         } else {
             Err(())
@@ -287,13 +286,13 @@ impl TryInto<DirectWithdraw> for &[u8] {
     fn try_into(self) -> Result<DirectWithdraw, ()> {
         if let Ok(v) = decode(&DIRECT_WITHDRAW_SIGNATURE, &self[..]) {
             Ok(DirectWithdraw {
-                _proof: v[1].clone().into_bytes().unwrap(),
-                _root: v[2].clone().into_fixed_bytes().unwrap(),
-                _nullifierHash: v[3].clone().into_fixed_bytes().unwrap(),
-                _recipient: v[4].clone().into_address().unwrap(),
-                _relayer: v[5].clone().into_address().unwrap(),
-                _fee: v[6].clone().into_uint().unwrap(),
-                _refund: v[7].clone().into_uint().unwrap(),
+                _proof: v[0].clone().into_bytes().unwrap(),
+                _root: v[1].clone().into_fixed_bytes().unwrap(),
+                _nullifierHash: v[2].clone().into_fixed_bytes().unwrap(),
+                _recipient: v[3].clone().into_address().unwrap(),
+                _relayer: v[4].clone().into_address().unwrap(),
+                _fee: v[5].clone().into_uint().unwrap(),
+                _refund: v[6].clone().into_uint().unwrap(),
             })
         } else {
             Err(())
