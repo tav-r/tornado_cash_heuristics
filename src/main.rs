@@ -4,7 +4,10 @@ mod helpers;
 
 use std::fs::read_to_string;
 
-use analysis::prepare::split_deposit_withdraw;
+use analysis::{
+    analyze::{get_address_matches, match_patterns},
+    prepare::split_deposit_withdraw,
+};
 
 // const TORNADO_CASH_1ETH: [u8; 20] = hex!("47ce0c6ed5b0ce3d3a51fdb1c52dc66a7c3c2936");
 
@@ -65,6 +68,7 @@ fn get_deposits_by_pool<'a>(
     )
 }
 
+/*
 fn print_results(
     res: std::collections::HashMap<
         web3::types::H160,
@@ -91,6 +95,7 @@ fn print_results(
         )
     });
 }
+*/
 
 fn main() {
     // read and parse history of "normal" transactions (calls made by EOAs)
@@ -144,11 +149,14 @@ fn main() {
             .into_iter()
             .zip([withd_0_1_eth, withd_1_eth, withd_10_eth, withd_100_eth]),
     ) {
-        println!("[*] {} pool", p);
-        println!("Analysing {} deposits and {} withdraws", d.len(), w.len());
-        let res = analysis::analyze::get_address_matches(&d, &w);
-        println!("{} potentially compromised addresses", res.len());
-        print_results(res);
+        let res = get_address_matches(&d, &w);
+        println!(
+            "{} potentially compromised addresses in the {} pool (analysed {} deposits and {} withdraws)",
+            res.len(),
+            p,
+            d.len(), w.len()
+        );
+        // print_results(res);
     }
 
     // unique gas price
@@ -156,4 +164,8 @@ fn main() {
     // linked addresses
 
     // multiple denomination
+    println!(
+        "{} unique deposit/withdraw patterns found",
+        match_patterns(&deposits, &withdraws).len()
+    );
 }
