@@ -3,8 +3,13 @@ use crate::data::{Deposit, Pool, Withdraw};
 use std::collections::HashMap;
 use web3::types::H160;
 
+// This function is not strictly needed - it is used in the deposit/withdraw pattern
+// finding function (match_pattern) to make the algorithm faster by pre-filtering
+// patterns.
 fn pattern_is_interesting(pattern: &DepositWithdrawPattern) -> bool {
+    // address has deposited more than once to the same pool...
     (pattern.n0_1ETH > 1 || pattern.n1ETH > 1 || pattern.n10ETH > 1 || pattern.n100ETH > 1)
+    // ...and address has deposited to multiple different pools
         && [
             pattern.n0_1ETH,
             pattern.n1ETH,
@@ -15,6 +20,22 @@ fn pattern_is_interesting(pattern: &DepositWithdrawPattern) -> bool {
         .filter(|e| *e > 0)
         .count()
             > 1
+}
+
+fn count_pool(
+    pool: &Pool,
+    _0_1eth: u64,
+    _1eth: u64,
+    _10eth: u64,
+    _100eth: u64,
+) -> (u64, u64, u64, u64) {
+    match pool {
+        Pool::_0_1ETH => (_0_1eth + 1, _1eth, _10eth, _100eth),
+        Pool::_1ETH => (_0_1eth, _1eth + 1, _10eth, _100eth),
+        Pool::_10ETH => (_0_1eth, _1eth, _10eth + 1, _100eth),
+        Pool::_100ETH => (_0_1eth, _1eth, _10eth, _100eth + 1),
+        Pool::Unknown => (_0_1eth, _1eth, _10eth, _100eth),
+    }
 }
 
 /// Returns a HashMap that assigns to each address that ever deposited ether a tuple
@@ -117,13 +138,7 @@ pub fn match_patterns(
                         (0u64, 0u64, 0u64, 0u64),
                         |(_0_1eth, _1eth, _10eth, _100eth), d| {
                             if *a == d.from {
-                                match d.pool {
-                                    Pool::_0_1ETH => (_0_1eth + 1, _1eth, _10eth, _100eth),
-                                    Pool::_1ETH => (_0_1eth, _1eth + 1, _10eth, _100eth),
-                                    Pool::_10ETH => (_0_1eth, _1eth, _10eth + 1, _100eth),
-                                    Pool::_100ETH => (_0_1eth, _1eth, _10eth, _100eth + 1),
-                                    Pool::Unknown => (_0_1eth, _1eth, _10eth, _100eth),
-                                }
+                                count_pool(&d.pool, _0_1eth, _1eth, _10eth, _100eth)
                             } else {
                                 (_0_1eth, _1eth, _10eth, _100eth)
                             }
@@ -144,13 +159,7 @@ pub fn match_patterns(
                         (0u64, 0u64, 0u64, 0u64),
                         |(_0_1eth, _1eth, _10eth, _100eth), w| {
                             if *a == w.receiver {
-                                match w.pool {
-                                    Pool::_0_1ETH => (_0_1eth + 1, _1eth, _10eth, _100eth),
-                                    Pool::_1ETH => (_0_1eth, _1eth + 1, _10eth, _100eth),
-                                    Pool::_10ETH => (_0_1eth, _1eth, _10eth + 1, _100eth),
-                                    Pool::_100ETH => (_0_1eth, _1eth, _10eth, _100eth + 1),
-                                    Pool::Unknown => (_0_1eth, _1eth, _10eth, _100eth),
-                                }
+                                count_pool(&w.pool, _0_1eth, _1eth, _10eth, _100eth)
                             } else {
                                 (_0_1eth, _1eth, _10eth, _100eth)
                             }
@@ -161,18 +170,22 @@ pub fn match_patterns(
         })
         .collect();
 
-    let pattern_matches: Vec<(H160, H160, &DepositWithdrawPattern, &DepositWithdrawPattern)> =
-        deposit_patterns
-            .iter()
-            .filter(|(_, dp)| pattern_is_interesting(&dp))
-            .map(|(a, dp)| {
-                withdraw_patterns
-                    .iter()
-                    .filter_map(move |(a_, wp)| if wp == dp { Some((a_, wp)) } else { None })
-                    .map(move |(a_, wp)| (*a, *a_, wp, dp))
-            })
-            .flatten()
-            .collect();
+    let pattern_matches: Vec<(
+        H160,                    // depositing address
+        H160,                    // withdrawing address
+        &DepositWithdrawPattern, // deposit pattern
+        &DepositWithdrawPattern, // withdraw pattern
+    )> = deposit_patterns
+        .iter()
+        .filter(|(_, dp)| pattern_is_interesting(&dp))
+        .map(|(a, dp)| {
+            withdraw_patterns
+                .iter()
+                .filter_map(move |(a_, wp)| if wp == dp { Some((a_, wp)) } else { None })
+                .map(move |(a_, wp)| (*a, *a_, wp, dp))
+        })
+        .flatten()
+        .collect();
 
     pattern_matches
         .iter()

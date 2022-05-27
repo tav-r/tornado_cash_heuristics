@@ -37,30 +37,6 @@ fn pool_by_addr(addr: H160) -> Pool {
     }
 }
 
-// Etherscans "internal transactions" are currently not used.
-/*
-impl ESTransaction for ESInternalTransaction {
-    fn transaction_hash(&self) -> H256 {
-        self.hash
-    }
-    fn transaction_value(&self) -> u128 {
-        self.value
-    }
-    fn transaction_to(&self) -> Option<H160> {
-        Some(self.to)
-    }
-    fn transaction_from(&self) -> H160 {
-        self.from
-    }
-    fn transaction_blocknumber(&self) -> u128 {
-        self.blockNumber
-    }
-    fn transaction_is_error(&self) -> u128 {
-        self.isError
-    }
-}
-*/
-
 impl ESTransaction for ESNormalTransaction {
     fn transaction_hash(&self) -> H256 {
         self.hash
@@ -81,43 +57,6 @@ impl ESTransaction for ESNormalTransaction {
         self.isError
     }
 }
-
-/*
-impl TryInto<ESInternalTransaction> for ESInternalTransactionStrings {
-    type Error = Box<dyn Error>;
-
-    fn try_into(self) -> Result<ESInternalTransaction, Box<dyn Error>> {
-        Ok(ESInternalTransaction {
-            blockNumber: self.blockNumber.parse()?,
-            timeStamp: self.timeStamp.parse()?,
-            hash: self.hash.get(2..).unwrap().parse()?,
-            from: self.from.get(2..).unwrap().parse()?,
-            to: self.to.get(2..).unwrap().parse()?,
-            value: self.value.parse()?,
-            contractAddress: if self.contractAddress.is_empty() {
-                None
-            } else {
-                Some(self.contractAddress.get(2..).unwrap().parse()?)
-            },
-            input: if self.input.is_empty() {
-                None
-            } else {
-                Some(hex_decode(self.input.get(2..).unwrap())?)
-            },
-            type_: self.type_.parse()?,
-            gas: self.gas.parse()?,
-            gasUsed: self.gasUsed.parse()?,
-            traceId: self.traceId,
-            isError: self.isError.parse()?,
-            errCode: if self.errCode.is_empty() {
-                None
-            } else {
-                Some(self.errCode.parse()?)
-            },
-        })
-    }
-}
-*/
 
 impl TryInto<ESNormalTransaction> for ESNormalTransactionStrings {
     type Error = Box<dyn Error>;

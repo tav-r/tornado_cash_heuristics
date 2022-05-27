@@ -19,47 +19,6 @@ pub trait ESTransaction {
     fn transaction_is_error(&self) -> u128;
 }
 
-/*
-#[allow(non_snake_case)]
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ESInternalTransactionStrings {
-    blockNumber: String,
-    timeStamp: String,
-    hash: String,
-    from: String,
-    to: String,
-    value: String,
-    contractAddress: String,
-    input: String,
-    #[serde(rename = "type")]
-    type_: String,
-    gas: String,
-    gasUsed: String,
-    traceId: String,
-    isError: String,
-    errCode: String,
-}
-
-#[allow(non_snake_case)]
-#[derive(Debug)]
-pub struct ESInternalTransaction {
-    pub blockNumber: u128,
-    pub timeStamp: u128,
-    pub hash: H256,
-    pub from: H160,
-    pub to: H160,
-    pub value: u128,
-    pub contractAddress: Option<H160>,
-    pub input: Option<Vec<u8>>,
-    pub type_: String,
-    pub gas: u128,
-    pub gasUsed: u128,
-    pub traceId: String,
-    pub isError: u128,
-    pub errCode: Option<String>,
-}
-*/
-
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ESNormalTransactionStrings {
