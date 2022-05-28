@@ -1,5 +1,6 @@
 use super::DepositWithdrawPattern;
-use crate::data::{Deposit, Pool, Withdraw};
+use crate::data::{Deposit, InBlock, InPool, Pool, Withdraw};
+use itertools::Itertools;
 use std::collections::HashMap;
 use web3::types::H160;
 
@@ -22,20 +23,75 @@ fn pattern_is_interesting(pattern: &DepositWithdrawPattern) -> bool {
             > 1
 }
 
-fn count_pool(
-    pool: &Pool,
-    _0_1eth: u64,
-    _1eth: u64,
-    _10eth: u64,
-    _100eth: u64,
-) -> (u64, u64, u64, u64) {
-    match pool {
-        Pool::_0_1ETH => (_0_1eth + 1, _1eth, _10eth, _100eth),
-        Pool::_1ETH => (_0_1eth, _1eth + 1, _10eth, _100eth),
-        Pool::_10ETH => (_0_1eth, _1eth, _10eth + 1, _100eth),
-        Pool::_100ETH => (_0_1eth, _1eth, _10eth, _100eth + 1),
-        Pool::Unknown => (_0_1eth, _1eth, _10eth, _100eth),
-    }
+// put withdraws/transactions into separate vectors for each pool
+fn collect_pools<'a, T: InPool + InBlock>(
+    ts: &[&'a T],
+) -> (Vec<&'a T>, Vec<&'a T>, Vec<&'a T>, Vec<&'a T>) {
+    ts.iter().copied().fold(
+        (vec![], vec![], vec![], vec![]),
+        |(_0_1eth, _1eth, _10eth, _100eth), t| match t.pool() {
+            Pool::_0_1ETH => (
+                _0_1eth
+                    .into_iter()
+                    .chain([t].into_iter())
+                    .sorted_by_key(|t| t.block())
+                    .collect(),
+                _1eth,
+                _10eth,
+                _100eth,
+            ),
+            Pool::_1ETH => (
+                _0_1eth,
+                _1eth
+                    .into_iter()
+                    .chain([t].into_iter())
+                    .sorted_by_key(|t| t.block())
+                    .collect(),
+                _10eth,
+                _100eth,
+            ),
+            Pool::_10ETH => (
+                _0_1eth,
+                _1eth,
+                _10eth
+                    .into_iter()
+                    .chain([t].into_iter())
+                    .sorted_by_key(|t| t.block())
+                    .collect(),
+                _100eth,
+            ),
+            Pool::_100ETH => (
+                _0_1eth,
+                _1eth,
+                _10eth,
+                _100eth
+                    .into_iter()
+                    .chain([t].into_iter())
+                    .sorted_by_key(|t| t.block())
+                    .collect(),
+            ),
+            Pool::Unknown => (_0_1eth, _1eth, _10eth, _100eth),
+        },
+    )
+}
+
+// check if each deposit to a pool was made before a withdraw from this pool
+fn earlier(deposits: &[&Deposit], withdraws: &[&Withdraw]) -> bool {
+    let (d0_1eth, d1eth, d10eth, d100eth) = collect_pools(deposits);
+    let (w0_1eth, w1eth, w10eth, w100eth) = collect_pools(withdraws);
+
+    [
+        (d0_1eth, w0_1eth),
+        (d1eth, w1eth),
+        (d10eth, w10eth),
+        (d100eth, w100eth),
+    ]
+    .iter()
+    .all(|(ds, ws)| {
+        ds.iter()
+            .zip(ws.iter())
+            .all(|(d, w)| d.block_number <= w.block_number)
+    })
 }
 
 /// Returns a HashMap that assigns to each address that ever deposited ether a tuple
@@ -102,70 +158,39 @@ pub fn match_patterns(
     deposits: &[Deposit],
     withdraws: &[Withdraw],
 ) -> Vec<(H160, H160, DepositWithdrawPattern)> {
-    let depositors = deposits
-        .iter()
-        // get all depositors without duplicates
-        .fold(vec![], |addrs, d| {
-            if !addrs.contains(&d.from) {
-                immut_append!(addrs, d.from)
-            } else {
-                addrs
-            }
-        });
-
-    let withdrawers = withdraws
-        .iter()
-        // get all depositors without duplicates
-        .fold(vec![], |addrs, d| {
-            if !addrs.contains(&d.receiver) {
-                immut_append!(addrs, d.receiver)
-            } else {
-                addrs
-            }
-        });
-
-    let deposit_patterns: Vec<(H160, DepositWithdrawPattern)> = depositors
-        .iter()
-        .map(|a| {
-            (*a, {
+    // get a mapping from addresses to deposits made by this address
+    let depositors: HashMap<_, _> =
+        HashMap::from_iter(deposits.iter().map(|d| d.from).unique().map(|a| {
+            (
+                a,
                 deposits
                     .iter()
-                    .fold(
-                        (0u64, 0u64, 0u64, 0u64),
-                        |(_0_1eth, _1eth, _10eth, _100eth), d| {
-                            if *a == d.from {
-                                count_pool(&d.pool, _0_1eth, _1eth, _10eth, _100eth)
-                            } else {
-                                (_0_1eth, _1eth, _10eth, _100eth)
-                            }
-                        },
-                    )
-                    .into()
-            })
-        })
-        .collect();
+                    .filter(|d| d.from == a)
+                    .collect::<Vec<&Deposit>>(),
+            )
+        }));
 
-    let withdraw_patterns: Vec<(H160, DepositWithdrawPattern)> = withdrawers
-        .iter()
-        .map(|a| {
-            (*a, {
+    // get a mapping from addresses to withdraws made by this address
+    let withdrawers: HashMap<_, _> =
+        HashMap::from_iter(withdraws.iter().map(|d| d.receiver).unique().map(|a| {
+            (
+                a,
                 withdraws
                     .iter()
-                    .fold(
-                        (0u64, 0u64, 0u64, 0u64),
-                        |(_0_1eth, _1eth, _10eth, _100eth), w| {
-                            if *a == w.receiver {
-                                count_pool(&w.pool, _0_1eth, _1eth, _10eth, _100eth)
-                            } else {
-                                (_0_1eth, _1eth, _10eth, _100eth)
-                            }
-                        },
-                    )
-                    .into()
-            })
-        })
-        .collect();
+                    .filter(|d| d.receiver == a)
+                    .collect::<Vec<&Withdraw>>(),
+            )
+        }));
 
+    // get deposit patterns
+    let deposit_patterns: Vec<(H160, DepositWithdrawPattern)> =
+        depositors.iter().map(|(a, ds)| (*a, ds.into())).collect();
+
+    // get withdraw patterns
+    let withdraw_patterns: Vec<(H160, DepositWithdrawPattern)> =
+        withdrawers.iter().map(|(a, ws)| (*a, ws.into())).collect();
+
+    // search matching patterns
     let pattern_matches: Vec<(
         H160,                    // depositing address
         H160,                    // withdrawing address
@@ -173,7 +198,9 @@ pub fn match_patterns(
         &DepositWithdrawPattern, // withdraw pattern
     )> = deposit_patterns
         .iter()
+        // select only "interesting" patterns
         .filter(|(_, dp)| pattern_is_interesting(dp))
+        // check if withdraw pattern equals deposit pattern for all addresses
         .flat_map(|(a, dp)| {
             withdraw_patterns
                 .iter()
@@ -185,12 +212,15 @@ pub fn match_patterns(
     pattern_matches
         .iter()
         .filter(|(_, _, dp, _)| {
+            // select only matches that are unique
             pattern_matches
                 .iter()
                 .filter(|(_, _, dp_, _)| dp == dp_)
                 .count()
                 == 1
         })
+        // select only matches for which each deposit to a pool was made _before_ a withdraw from this pool
+        .filter(|(da, wa, _, _)| earlier(depositors.get(da).unwrap(), withdrawers.get(wa).unwrap()))
         .map(move |(da, wa, p, _)| (*da, *wa, **p))
         .collect()
 }

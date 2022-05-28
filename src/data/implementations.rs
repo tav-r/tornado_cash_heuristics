@@ -1,7 +1,7 @@
 use super::{
     Deposit, DirectDeposit, DirectWithdraw, ESNormalTransaction, ESNormalTransactionStrings,
-    ESTransaction, Pool, PoolCall, RouterCall, RouterDeposit, RouterWithdraw, Withdraw,
-    DIRECT_DEPOSIT_SIGNATURE, DIRECT_WITHDRAW_SIGNATURE, ROUTER_DEPOSIT_SIGNATURE,
+    ESTransaction, InBlock, InPool, Pool, PoolCall, RouterCall, RouterDeposit, RouterWithdraw,
+    Withdraw, DIRECT_DEPOSIT_SIGNATURE, DIRECT_WITHDRAW_SIGNATURE, ROUTER_DEPOSIT_SIGNATURE,
     ROUTER_WITHDRAW_SIGNATURE, TORNADO_CASH_0_1ETH, TORNADO_CASH_100ETH, TORNADO_CASH_10ETH,
     TORNADO_CASH_1ETH,
 };
@@ -216,5 +216,29 @@ impl Withdraw {
             relayer,
             fee,
         }
+    }
+}
+
+impl<'a> InPool for Withdraw {
+    fn pool(&'_ self) -> &'_ Pool {
+        &self.pool
+    }
+}
+
+impl<'a> InPool for Deposit {
+    fn pool(&'_ self) -> &'_ Pool {
+        &self.pool
+    }
+}
+
+impl InBlock for Deposit {
+    fn block(&self) -> u128 {
+        self.block_number
+    }
+}
+
+impl InBlock for Withdraw {
+    fn block(&self) -> u128 {
+        self.block_number
     }
 }

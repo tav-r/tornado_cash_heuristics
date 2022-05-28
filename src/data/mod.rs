@@ -167,3 +167,11 @@ pub enum Pool {
     _100ETH,
     Unknown,
 }
+
+pub trait InPool {
+    fn pool(&'_ self) -> &'_ Pool;
+}
+
+pub trait InBlock {
+    fn block(&self) -> u128;
+}
