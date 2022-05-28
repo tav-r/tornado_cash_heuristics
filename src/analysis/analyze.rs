@@ -51,8 +51,8 @@ fn count_pool(
 /// * `deposits` - a vector of references to Deposit structures to scan
 /// * `withdraws` - a vector of references to Withdraw structures to scan
 pub fn get_address_matches<'a>(
-    deposits: &'a Vec<&'a Deposit>,
-    withdraws: &'a Vec<&'a Withdraw>,
+    deposits: &'_ [&'a Deposit],
+    withdraws: &'_ [&'a Withdraw],
 ) -> HashMap<H160, (Vec<&'a Deposit>, Vec<&'a Withdraw>)> {
     deposits
         .iter()
@@ -70,15 +70,11 @@ pub fn get_address_matches<'a>(
             (
                 a,
                 (
-                    deposits
-                        .iter()
-                        .filter(|d| d.from == a)
-                        .map(|x| *x)
-                        .collect(),
+                    deposits.iter().filter(|d| d.from == a).copied().collect(),
                     withdraws
                         .iter()
                         .filter(|w| w.receiver == a)
-                        .map(|x| *x)
+                        .copied()
                         .collect(),
                 ),
             )
@@ -93,7 +89,7 @@ pub fn get_address_matches<'a>(
                 .collect();
 
             // check if any such withdraws were found, if yes, yield the match
-            if ds.len() > 0 && later_ws.len() > 0 {
+            if !ds.is_empty() && !later_ws.is_empty() {
                 Some((a, (ds, later_ws)))
             } else {
                 None
@@ -103,8 +99,8 @@ pub fn get_address_matches<'a>(
 }
 
 pub fn match_patterns(
-    deposits: &Vec<Deposit>,
-    withdraws: &Vec<Withdraw>,
+    deposits: &[Deposit],
+    withdraws: &[Withdraw],
 ) -> Vec<(H160, H160, DepositWithdrawPattern)> {
     let depositors = deposits
         .iter()
@@ -177,14 +173,13 @@ pub fn match_patterns(
         &DepositWithdrawPattern, // withdraw pattern
     )> = deposit_patterns
         .iter()
-        .filter(|(_, dp)| pattern_is_interesting(&dp))
-        .map(|(a, dp)| {
+        .filter(|(_, dp)| pattern_is_interesting(dp))
+        .flat_map(|(a, dp)| {
             withdraw_patterns
                 .iter()
                 .filter_map(move |(a_, wp)| if wp == dp { Some((a_, wp)) } else { None })
                 .map(move |(a_, wp)| (*a, *a_, wp, dp))
         })
-        .flatten()
         .collect();
 
     pattern_matches

@@ -7,7 +7,7 @@ use std::fs::read_to_string;
 fn parse_file<'a, T, U: TryInto<T> + Debug + Serialize + Deserialize<'a>>(
     contents: &'a str,
 ) -> Vec<T> {
-    from_str::<Vec<U>>(&contents)
+    from_str::<Vec<U>>(contents)
         .unwrap()
         .into_iter()
         .map(|ess| ess.try_into().or(Err(())))
@@ -21,13 +21,12 @@ pub fn load_files(
 ) -> Vec<ESNormalTransaction> {
     paths
         .into_iter()
-        .map(|p| {
+        .flat_map(|p| {
             parse_file::<ESNormalTransaction, ESNormalTransactionStrings>(
-                &read_to_string(p).expect(&format!("could not read file '{}'", p)),
+                &read_to_string(p).unwrap_or_else(|_| panic!("could not read file '{}'", p)),
             )
             .into_iter()
         })
-        .flatten()
         .filter(|t| filter(t))
         .collect()
 }

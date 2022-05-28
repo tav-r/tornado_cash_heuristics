@@ -1,11 +1,9 @@
 use super::DepositWithdrawPattern;
 
-impl Into<DepositWithdrawPattern> for (u64, u64, u64, u64) {
-    fn into(self) -> DepositWithdrawPattern {
-        #[allow(non_snake_case)]
-        let (n0_1ETH, n1ETH, n10ETH, n100ETH) = self;
-
-        DepositWithdrawPattern {
+impl From<(u64, u64, u64, u64)> for DepositWithdrawPattern {
+    #[allow(non_snake_case)]
+    fn from((n0_1ETH, n1ETH, n10ETH, n100ETH): (u64, u64, u64, u64)) -> Self {
+        Self {
             n0_1ETH,
             n1ETH,
             n10ETH,

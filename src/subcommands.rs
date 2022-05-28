@@ -3,29 +3,29 @@ use crate::data::{Deposit, Pool, Withdraw};
 use crate::immut_append;
 
 fn put_into_pool<'a, T>(
-    _0_1: Vec<&'a T>,
-    _1: Vec<&'a T>,
-    _10: Vec<&'a T>,
-    _100: Vec<&'a T>,
+    _0_1eth: Vec<&'a T>,
+    _1eth: Vec<&'a T>,
+    _10eth: Vec<&'a T>,
+    _100eth: Vec<&'a T>,
     pool: &Pool,
     t: &'a T,
 ) -> (Vec<&'a T>, Vec<&'a T>, Vec<&'a T>, Vec<&'a T>) {
     match pool {
-        Pool::_0_1ETH => (immut_append!(_0_1, t), _1, _10, _100),
-        Pool::_1ETH => (_0_1, immut_append!(_1, t), _10, _100),
-        Pool::_10ETH => (_0_1, _1, immut_append!(_10, t), _100),
-        Pool::_100ETH => (_0_1, _1, _10, immut_append!(_100, t)),
-        _ => (_0_1, _1, _10, _100),
+        Pool::_0_1ETH => (immut_append!(_0_1eth, t), _1eth, _10eth, _100eth),
+        Pool::_1ETH => (_0_1eth, immut_append!(_1eth, t), _10eth, _100eth),
+        Pool::_10ETH => (_0_1eth, _1eth, immut_append!(_10eth, t), _100eth),
+        Pool::_100ETH => (_0_1eth, _1eth, _10eth, immut_append!(_100eth, t)),
+        _ => (_0_1eth, _1eth, _10eth, _100eth),
     }
 }
 
-fn get_withdraws_by_pool<'a>(
-    withdraws: Vec<&'a Withdraw>,
+fn get_withdraws_by_pool(
+    withdraws: Vec<&'_ Withdraw>,
 ) -> (
-    Vec<&'a Withdraw>,
-    Vec<&'a Withdraw>,
-    Vec<&'a Withdraw>,
-    Vec<&'a Withdraw>,
+    Vec<&'_ Withdraw>,
+    Vec<&'_ Withdraw>,
+    Vec<&'_ Withdraw>,
+    Vec<&'_ Withdraw>,
 ) {
     withdraws.iter().fold(
         (vec![], vec![], vec![], vec![]),
@@ -39,13 +39,13 @@ fn get_withdraws_by_pool<'a>(
     )
 }
 
-fn get_deposits_by_pool<'a>(
-    deposits: Vec<&'a Deposit>,
+fn get_deposits_by_pool(
+    deposits: Vec<&'_ Deposit>,
 ) -> (
-    Vec<&'a Deposit>,
-    Vec<&'a Deposit>,
-    Vec<&'a Deposit>,
-    Vec<&'a Deposit>,
+    Vec<&'_ Deposit>,
+    Vec<&'_ Deposit>,
+    Vec<&'_ Deposit>,
+    Vec<&'_ Deposit>,
 ) {
     deposits.iter().fold(
         (vec![], vec![], vec![], vec![]),
@@ -55,7 +55,7 @@ fn get_deposits_by_pool<'a>(
     )
 }
 
-pub fn address_matches(deposits: &Vec<Deposit>, withdraws: &Vec<Withdraw>) {
+pub fn address_matches(deposits: &[Deposit], withdraws: &[Withdraw]) {
     // address matches per pool
     // get deposits and withdraws by pool
     let (dep_0_1_eth, dep_1_eth, dep_10_eth, dep_100_eth) =
@@ -79,7 +79,7 @@ pub fn address_matches(deposits: &Vec<Deposit>, withdraws: &Vec<Withdraw>) {
     }
 }
 
-pub fn multiple_denomination(deposits: &Vec<Deposit>, withdraws: &Vec<Withdraw>) {
+pub fn multiple_denomination(deposits: &[Deposit], withdraws: &[Withdraw]) {
     println!(
         "{} unique deposit/withdraw patterns found",
         match_patterns(deposits, withdraws).len()

@@ -29,8 +29,12 @@ fn main() {
     calls.sort_by(|t, t_| t.timeStamp.cmp(&t_.timeStamp));
 
     // divide calls into deposits and withdraws, drop other calls
-    let (deposits, withdraws) =
-        split_deposit_withdraw(&calls.iter().filter(|c| c.to.is_some()).collect());
+    let (deposits, withdraws) = split_deposit_withdraw(
+        &calls
+            .iter()
+            .filter(|c| c.to.is_some())
+            .collect::<Vec<&ESNormalTransaction>>(),
+    );
 
     // count deposits and withdraws
     println!(

@@ -87,15 +87,16 @@ impl TryInto<ESNormalTransaction> for ESNormalTransactionStrings {
     }
 }
 
-impl Into<RouterCall> for &[u8] {
-    fn into(self) -> RouterCall {
-        if self.len() >= 4 && self[0..4] == short_signature("withdraw", &ROUTER_WITHDRAW_SIGNATURE)
+impl From<&[u8]> for RouterCall {
+    fn from(input: &[u8]) -> Self {
+        if input.len() >= 4
+            && input[0..4] == short_signature("withdraw", &ROUTER_WITHDRAW_SIGNATURE)
         {
-            RouterCall::Withdraw(self[4..].try_into().unwrap())
-        } else if self.len() >= 4
-            && self[0..4] == short_signature("deposit", &ROUTER_DEPOSIT_SIGNATURE)
+            RouterCall::Withdraw(input[4..].try_into().unwrap())
+        } else if input.len() >= 4
+            && input[0..4] == short_signature("deposit", &ROUTER_DEPOSIT_SIGNATURE)
         {
-            RouterCall::Deposit(self[4..].try_into().unwrap())
+            RouterCall::Deposit(input[4..].try_into().unwrap())
         } else {
             RouterCall::Other
         }
@@ -105,7 +106,7 @@ impl Into<RouterCall> for &[u8] {
 impl TryInto<RouterDeposit> for &[u8] {
     type Error = ();
     fn try_into(self) -> Result<RouterDeposit, ()> {
-        if let Ok(v) = decode(&ROUTER_DEPOSIT_SIGNATURE, &self[..]) {
+        if let Ok(v) = decode(&ROUTER_DEPOSIT_SIGNATURE, self) {
             let pool_addr: [u8; 20] = v[0].clone().into_address().unwrap()[..].try_into().unwrap();
 
             Ok(RouterDeposit {
@@ -122,7 +123,7 @@ impl TryInto<RouterDeposit> for &[u8] {
 impl TryInto<RouterWithdraw> for &[u8] {
     type Error = Box<dyn Error>;
     fn try_into(self) -> Result<RouterWithdraw, Box<dyn Error>> {
-        if let Ok(v) = decode(&ROUTER_WITHDRAW_SIGNATURE, &self[..]) {
+        if let Ok(v) = decode(&ROUTER_WITHDRAW_SIGNATURE, self) {
             Ok(RouterWithdraw {
                 _tornado: token_to_h160(&v[0])?,
                 _proof: v[1].clone().into_bytes().unwrap(),
@@ -139,15 +140,16 @@ impl TryInto<RouterWithdraw> for &[u8] {
     }
 }
 
-impl Into<PoolCall> for &[u8] {
-    fn into(self) -> PoolCall {
-        if self.len() >= 4 && self[0..4] == short_signature("withdraw", &DIRECT_WITHDRAW_SIGNATURE)
+impl From<&[u8]> for PoolCall {
+    fn from(input: &[u8]) -> Self {
+        if input.len() >= 4
+            && input[0..4] == short_signature("withdraw", &DIRECT_WITHDRAW_SIGNATURE)
         {
-            PoolCall::Withdraw(self[4..].try_into().unwrap())
-        } else if self.len() >= 4
-            && self[0..4] == short_signature("deposit", &DIRECT_DEPOSIT_SIGNATURE)
+            PoolCall::Withdraw(input[4..].try_into().unwrap())
+        } else if input.len() >= 4
+            && input[0..4] == short_signature("deposit", &DIRECT_DEPOSIT_SIGNATURE)
         {
-            PoolCall::Deposit(self[4..].try_into().unwrap())
+            PoolCall::Deposit(input[4..].try_into().unwrap())
         } else {
             PoolCall::Other
         }
@@ -157,7 +159,7 @@ impl Into<PoolCall> for &[u8] {
 impl TryInto<DirectDeposit> for &[u8] {
     type Error = ();
     fn try_into(self) -> Result<DirectDeposit, ()> {
-        if let Ok(v) = decode(&DIRECT_DEPOSIT_SIGNATURE, &self[..]) {
+        if let Ok(v) = decode(&DIRECT_DEPOSIT_SIGNATURE, self) {
             Ok(DirectDeposit {
                 _commitment: v[0].clone().into_fixed_bytes().unwrap(),
             })
@@ -170,7 +172,7 @@ impl TryInto<DirectDeposit> for &[u8] {
 impl TryInto<DirectWithdraw> for &[u8] {
     type Error = Box<dyn Error>;
     fn try_into(self) -> Result<DirectWithdraw, Box<dyn Error>> {
-        if let Ok(v) = decode(&DIRECT_WITHDRAW_SIGNATURE, &self[..]) {
+        if let Ok(v) = decode(&DIRECT_WITHDRAW_SIGNATURE, self) {
             Ok(DirectWithdraw {
                 _proof: v[0].clone().into_bytes().unwrap(),
                 _root: v[1].clone().into_fixed_bytes().unwrap(),

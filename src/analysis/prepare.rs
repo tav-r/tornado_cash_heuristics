@@ -77,9 +77,7 @@ fn pool_call(
 ///
 /// # Arguments
 /// * calls - a reference to a vector of references to ESNormalTransaction structs (which represent result entries obtained from Etherscan)
-pub fn split_deposit_withdraw<'a>(
-    calls: &Vec<&'a ESNormalTransaction>,
-) -> (Vec<Deposit>, Vec<Withdraw>) {
+pub fn split_deposit_withdraw(calls: &[&ESNormalTransaction]) -> (Vec<Deposit>, Vec<Withdraw>) {
     calls.iter().fold((vec![], vec![]), |(dep, wit), c| {
         if c.to.unwrap() == TORNADO_CASH_ROUTER.into() {
             router_call(c, dep, wit)
