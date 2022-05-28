@@ -1,6 +1,6 @@
 mod implementations;
 
-use ethabi::{param_type::ParamType, Address as EthtypeAddress, Uint};
+use ethabi::{param_type::ParamType, Uint};
 use hex_literal::hex;
 use serde::{Deserialize, Serialize};
 use web3::types::{H160, H256};
@@ -111,20 +111,20 @@ pub struct DirectWithdraw {
     pub _proof: Vec<u8>,
     pub _root: Vec<u8>,
     pub _nullifierHash: Vec<u8>,
-    pub _recipient: EthtypeAddress,
-    pub _relayer: EthtypeAddress,
+    pub _recipient: H160,
+    pub _relayer: H160,
     pub _fee: Uint,
     pub _refund: Uint,
 }
 
 #[allow(non_snake_case)]
 pub struct RouterWithdraw {
-    pub _tornado: EthtypeAddress,
+    pub _tornado: H160,
     pub _proof: Vec<u8>,
     pub _root: Vec<u8>,
     pub _nullifierHash: Vec<u8>,
-    pub _recipient: EthtypeAddress,
-    pub _relayer: EthtypeAddress,
+    pub _recipient: H160,
+    pub _relayer: H160,
     pub _fee: Uint,
     pub _refund: Uint,
 }
@@ -136,7 +136,7 @@ pub struct DirectDeposit {
 
 #[allow(non_snake_case)]
 pub struct RouterDeposit {
-    pub _tornado: EthtypeAddress,
+    pub _tornado: H160,
     pub _commitment: Vec<u8>,
     pub _encryptedNote: Vec<u8>,
 }

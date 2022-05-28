@@ -9,42 +9,28 @@ fn router_call(
     let rc: RouterCall = call.input.as_ref().unwrap()[..].into();
 
     match rc {
-        RouterCall::Withdraw(w) => {
-            let rec: &[u8; 20] = w._recipient[..].try_into().unwrap();
-            let rel: &[u8; 20] = w._relayer[..].try_into().unwrap();
-            let pool_addr: &[u8; 20] = w._tornado[..].try_into().unwrap();
-
-            (
-                dep,
-                wit.into_iter()
-                    .chain(
-                        [Withdraw::new(
-                            call.hash,
-                            call.blockNumber,
-                            pool_addr.into(),
-                            rec.into(),
-                            rel.into(),
-                            w._fee,
-                        )]
-                        .into_iter(),
-                    )
-                    .collect(),
-            )
-        }
+        RouterCall::Withdraw(w) => (
+            dep,
+            immut_append!(
+                wit,
+                Withdraw::new(
+                    call.hash,
+                    call.blockNumber,
+                    w._tornado,
+                    w._recipient,
+                    w._relayer,
+                    w._fee,
+                )
+            ),
+        ),
         RouterCall::Deposit(d) => {
             let pool_addr: &[u8; 20] = d._tornado[..].try_into().unwrap();
+
             (
-                dep.into_iter()
-                    .chain(
-                        [Deposit::new(
-                            call.hash,
-                            call.blockNumber,
-                            pool_addr.into(),
-                            call.from,
-                        )]
-                        .into_iter(),
-                    )
-                    .collect(),
+                immut_append!(
+                    dep,
+                    Deposit::new(call.hash, call.blockNumber, pool_addr.into(), call.from,)
+                ),
                 wit,
             )
         }
@@ -60,38 +46,25 @@ fn pool_call(
     let rc: PoolCall = call.input.as_ref().unwrap()[..].into();
 
     match rc {
-        PoolCall::Withdraw(w) => {
-            let rec: &[u8; 20] = w._recipient[..].try_into().unwrap();
-            let rel: &[u8; 20] = w._relayer[..].try_into().unwrap();
-            (
-                dep,
-                wit.into_iter()
-                    .chain(
-                        [Withdraw::new(
-                            call.hash,
-                            call.blockNumber,
-                            call.to.unwrap(),
-                            rec.into(),
-                            rel.into(),
-                            w._fee,
-                        )]
-                        .into_iter(),
-                    )
-                    .collect(),
-            )
-        }
-        PoolCall::Deposit(_) => (
-            dep.into_iter()
-                .chain(
-                    [Deposit::new(
-                        call.hash,
-                        call.blockNumber,
-                        call.to.unwrap(),
-                        call.from,
-                    )]
-                    .into_iter(),
+        PoolCall::Withdraw(w) => (
+            dep,
+            immut_append!(
+                wit,
+                Withdraw::new(
+                    call.hash,
+                    call.blockNumber,
+                    call.to.unwrap(),
+                    w._recipient,
+                    w._relayer,
+                    w._fee,
                 )
-                .collect(),
+            ),
+        ),
+        PoolCall::Deposit(_) => (
+            immut_append!(
+                dep,
+                Deposit::new(call.hash, call.blockNumber, call.to.unwrap(), call.from,)
+            ),
             wit,
         ),
         _ => (dep, wit),

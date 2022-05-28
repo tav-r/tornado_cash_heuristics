@@ -76,7 +76,6 @@ pub fn address_matches(deposits: &Vec<Deposit>, withdraws: &Vec<Withdraw>) {
             p,
             d.len(), w.len()
         );
-        // print_results(res);
     }
 }
 

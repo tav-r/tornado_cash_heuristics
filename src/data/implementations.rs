@@ -1,29 +1,19 @@
 use super::{
-    Deposit,
-    DirectDeposit,
-    DirectWithdraw, //ESInternalTransaction, ESInternalTransactionStrings,
-    ESNormalTransaction,
-    ESNormalTransactionStrings,
-    ESTransaction,
-    Pool,
-    PoolCall,
-    RouterCall,
-    RouterDeposit,
-    RouterWithdraw,
-    Withdraw,
-    DIRECT_DEPOSIT_SIGNATURE,
-    DIRECT_WITHDRAW_SIGNATURE,
-    ROUTER_DEPOSIT_SIGNATURE,
-    ROUTER_WITHDRAW_SIGNATURE,
-    TORNADO_CASH_0_1ETH,
-    TORNADO_CASH_100ETH,
-    TORNADO_CASH_10ETH,
+    Deposit, DirectDeposit, DirectWithdraw, ESNormalTransaction, ESNormalTransactionStrings,
+    ESTransaction, Pool, PoolCall, RouterCall, RouterDeposit, RouterWithdraw, Withdraw,
+    DIRECT_DEPOSIT_SIGNATURE, DIRECT_WITHDRAW_SIGNATURE, ROUTER_DEPOSIT_SIGNATURE,
+    ROUTER_WITHDRAW_SIGNATURE, TORNADO_CASH_0_1ETH, TORNADO_CASH_100ETH, TORNADO_CASH_10ETH,
     TORNADO_CASH_1ETH,
 };
-use ethabi::{decode, short_signature, Uint};
+use ethabi::{decode, short_signature, Token, Uint};
 use hex::decode as hex_decode;
 use std::error::Error;
 use web3::types::{H160, H256};
+
+fn token_to_h160(token: &Token) -> Result<H160, Box<dyn Error>> {
+    let bytes: [u8; 20] = token.clone().into_address().unwrap()[..].try_into()?;
+    Ok(bytes.into())
+}
 
 // used by Deposit::new(...) and Withdraw::new(...) to assign the Pool enum
 fn pool_by_addr(addr: H160) -> Pool {
@@ -116,8 +106,10 @@ impl TryInto<RouterDeposit> for &[u8] {
     type Error = ();
     fn try_into(self) -> Result<RouterDeposit, ()> {
         if let Ok(v) = decode(&ROUTER_DEPOSIT_SIGNATURE, &self[..]) {
+            let pool_addr: [u8; 20] = v[0].clone().into_address().unwrap()[..].try_into().unwrap();
+
             Ok(RouterDeposit {
-                _tornado: v[0].clone().into_address().unwrap(),
+                _tornado: pool_addr.into(),
                 _commitment: v[1].clone().into_fixed_bytes().unwrap(),
                 _encryptedNote: v[2].clone().into_bytes().unwrap(),
             })
@@ -128,21 +120,21 @@ impl TryInto<RouterDeposit> for &[u8] {
 }
 
 impl TryInto<RouterWithdraw> for &[u8] {
-    type Error = ();
-    fn try_into(self) -> Result<RouterWithdraw, ()> {
+    type Error = Box<dyn Error>;
+    fn try_into(self) -> Result<RouterWithdraw, Box<dyn Error>> {
         if let Ok(v) = decode(&ROUTER_WITHDRAW_SIGNATURE, &self[..]) {
             Ok(RouterWithdraw {
-                _tornado: v[0].clone().into_address().unwrap(),
+                _tornado: token_to_h160(&v[0])?,
                 _proof: v[1].clone().into_bytes().unwrap(),
                 _root: v[2].clone().into_fixed_bytes().unwrap(),
                 _nullifierHash: v[3].clone().into_fixed_bytes().unwrap(),
-                _recipient: v[4].clone().into_address().unwrap(),
-                _relayer: v[5].clone().into_address().unwrap(),
+                _recipient: token_to_h160(&v[4])?,
+                _relayer: token_to_h160(&v[5])?,
                 _fee: v[6].clone().into_uint().unwrap(),
                 _refund: v[7].clone().into_uint().unwrap(),
             })
         } else {
-            Err(())
+            Err("Could not decode input.".into())
         }
     }
 }
@@ -176,20 +168,20 @@ impl TryInto<DirectDeposit> for &[u8] {
 }
 
 impl TryInto<DirectWithdraw> for &[u8] {
-    type Error = ();
-    fn try_into(self) -> Result<DirectWithdraw, ()> {
+    type Error = Box<dyn Error>;
+    fn try_into(self) -> Result<DirectWithdraw, Box<dyn Error>> {
         if let Ok(v) = decode(&DIRECT_WITHDRAW_SIGNATURE, &self[..]) {
             Ok(DirectWithdraw {
                 _proof: v[0].clone().into_bytes().unwrap(),
                 _root: v[1].clone().into_fixed_bytes().unwrap(),
                 _nullifierHash: v[2].clone().into_fixed_bytes().unwrap(),
-                _recipient: v[3].clone().into_address().unwrap(),
-                _relayer: v[4].clone().into_address().unwrap(),
+                _recipient: token_to_h160(&v[3])?,
+                _relayer: token_to_h160(&v[4])?,
                 _fee: v[5].clone().into_uint().unwrap(),
                 _refund: v[6].clone().into_uint().unwrap(),
             })
         } else {
-            Err(())
+            Err("Could not decode input.".into())
         }
     }
 }
