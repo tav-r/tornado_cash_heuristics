@@ -71,7 +71,7 @@ fn pool_call(
     }
 }
 
-/// Parse transactions contract function calls. If the input of a call should be (tried)
+/// Parse transactions contract function calls. Whether the input of a call should be (tried)
 /// to be parsed as a call to a router or as a "direct" call to a pool is decided by
 /// checking if the receiver has the Tornado Cash Router address or not.
 ///

@@ -23,7 +23,7 @@ fn pattern_is_interesting(pattern: &DepositWithdrawPattern) -> bool {
             > 1
 }
 
-// put withdraws/transactions into separate vectors for each pool
+// put withdraws/withdraws into separate vectors for each pool
 fn collect_pools<'a, T: InPool + InBlock>(
     ts: &[&'a T],
 ) -> (Vec<&'a T>, Vec<&'a T>, Vec<&'a T>, Vec<&'a T>) {
