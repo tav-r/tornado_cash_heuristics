@@ -209,7 +209,7 @@ pub fn match_patterns(
         .iter()
         // select only "interesting" patterns
         .filter(|(_, dp)| pattern_is_interesting(dp))
-        // check if withdraw pattern equals deposit pattern for all addresses
+        // for each deposit pattern find all equal withdraw patterns
         .flat_map(|(a, dp)| {
             withdraw_patterns
                 .iter()
