@@ -104,11 +104,11 @@ fn earlier(deposits: &[&Deposit], withdraws: &[&Withdraw]) -> bool {
 ///
 /// # Arguments
 ///
-/// * `deposits` - a vector of references to Deposit structures to scan
-/// * `withdraws` - a vector of references to Withdraw structures to scan
+/// * `deposits` - a slice of references to Deposit structures to scan
+/// * `withdraws` - a slice of references to Withdraw structures to scan
 pub fn get_address_matches<'a>(
-    deposits: &'_ [&'a Deposit],
-    withdraws: &'_ [&'a Withdraw],
+    deposits: &[&'a Deposit],
+    withdraws: &[&'a Withdraw],
 ) -> HashMap<H160, (Vec<&'a Deposit>, Vec<&'a Withdraw>)> {
     deposits
         .iter()
@@ -154,6 +154,13 @@ pub fn get_address_matches<'a>(
         .collect()
 }
 
+/// Get a vector of triples of two addresses and a certain (([deposit/withdraw pattern](DepositWithdrawPattern))
+/// between both addresses.
+///
+/// # Arguments
+///
+/// * `deposits` - a slice of references to Deposit structures to scan
+/// * `withdraws` - a slice of references to Withdraw structures to scan
 pub fn match_patterns(
     deposits: &[Deposit],
     withdraws: &[Withdraw],

@@ -80,8 +80,7 @@ pub fn address_matches(deposits: &[Deposit], withdraws: &[Withdraw]) {
 }
 
 pub fn multiple_denomination(deposits: &[Deposit], withdraws: &[Withdraw]) {
-    println!(
-        "{} unique deposit/withdraw patterns found",
-        match_patterns(deposits, withdraws).len()
-    );
+    let res = match_patterns(deposits, withdraws);
+    println!("{} unique deposit/withdraw patterns found", res.len());
+    dbg!(res);
 }
