@@ -1,4 +1,5 @@
 use crate::data::{ESNormalTransaction, ESNormalTransactionStrings};
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 use std::fmt::Debug;
@@ -28,5 +29,7 @@ pub fn load_files(
             .into_iter()
         })
         .filter(|t| filter(t))
+        // get rid of duplicate entries
+        .unique()
         .collect()
 }

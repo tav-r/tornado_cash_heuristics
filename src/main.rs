@@ -21,7 +21,7 @@ fn main() {
         .expect("Please supply path(s) to transaction history files")
         .collect();
 
-    // read and parse history of "normal" transactions from files specified via command line
+    // read and parse transaction histories from files specified via command line, filter errors
     let mut calls: Vec<ESNormalTransaction> =
         load_files(files, &|t: &ESNormalTransaction| t.isError == 0);
 
