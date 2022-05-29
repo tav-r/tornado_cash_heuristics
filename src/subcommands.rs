@@ -19,13 +19,13 @@ fn put_into_pool<'a, T>(
     }
 }
 
-fn get_withdraws_by_pool(
-    withdraws: Vec<&'_ Withdraw>,
+fn get_withdraws_by_pool<'a>(
+    withdraws: &[&'a Withdraw],
 ) -> (
-    Vec<&'_ Withdraw>,
-    Vec<&'_ Withdraw>,
-    Vec<&'_ Withdraw>,
-    Vec<&'_ Withdraw>,
+    Vec<&'a Withdraw>,
+    Vec<&'a Withdraw>,
+    Vec<&'a Withdraw>,
+    Vec<&'a Withdraw>,
 ) {
     withdraws.iter().fold(
         (vec![], vec![], vec![], vec![]),
@@ -39,13 +39,13 @@ fn get_withdraws_by_pool(
     )
 }
 
-fn get_deposits_by_pool(
-    deposits: Vec<&'_ Deposit>,
+fn get_deposits_by_pool<'a>(
+    deposits: &[&'a Deposit],
 ) -> (
-    Vec<&'_ Deposit>,
-    Vec<&'_ Deposit>,
-    Vec<&'_ Deposit>,
-    Vec<&'_ Deposit>,
+    Vec<&'a Deposit>,
+    Vec<&'a Deposit>,
+    Vec<&'a Deposit>,
+    Vec<&'a Deposit>,
 ) {
     deposits.iter().fold(
         (vec![], vec![], vec![], vec![]),
@@ -55,14 +55,13 @@ fn get_deposits_by_pool(
     )
 }
 
-pub fn address_matches(deposits: &[Deposit], withdraws: &[Withdraw]) {
+pub fn address_matches(deposits: &[&Deposit], withdraws: &[&Withdraw]) {
     // address matches per pool
     // get deposits and withdraws by pool
-    let (dep_0_1_eth, dep_1_eth, dep_10_eth, dep_100_eth) =
-        get_deposits_by_pool(deposits.iter().collect());
+    let (dep_0_1_eth, dep_1_eth, dep_10_eth, dep_100_eth) = get_deposits_by_pool(deposits);
 
     let (withd_0_1_eth, withd_1_eth, withd_10_eth, withd_100_eth) =
-        get_withdraws_by_pool(withdraws.iter().collect());
+        get_withdraws_by_pool(withdraws);
 
     for (p, (d, w)) in ["0.1 ETH", "1 ETH", "10 ETH", "100 Eth"].into_iter().zip(
         [dep_0_1_eth, dep_1_eth, dep_10_eth, dep_100_eth]
@@ -79,8 +78,7 @@ pub fn address_matches(deposits: &[Deposit], withdraws: &[Withdraw]) {
     }
 }
 
-pub fn multiple_denomination(deposits: &[Deposit], withdraws: &[Withdraw]) {
+pub fn multiple_denomination(deposits: &[&Deposit], withdraws: &[&Withdraw]) {
     let res = match_patterns(deposits, withdraws);
     println!("{} unique deposit/withdraw patterns found", res.len());
-    dbg!(res);
 }

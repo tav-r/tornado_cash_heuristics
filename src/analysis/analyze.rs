@@ -162,8 +162,8 @@ pub fn get_address_matches<'a>(
 /// * `deposits` - a slice of references to Deposit structures to scan
 /// * `withdraws` - a slice of references to Withdraw structures to scan
 pub fn match_patterns(
-    deposits: &[Deposit],
-    withdraws: &[Withdraw],
+    deposits: &[&Deposit],
+    withdraws: &[&Withdraw],
 ) -> Vec<(H160, H160, DepositWithdrawPattern)> {
     // get a mapping from addresses to deposits made by this address
     let depositors: HashMap<_, _> =
@@ -173,6 +173,7 @@ pub fn match_patterns(
                 deposits
                     .iter()
                     .filter(|d| d.from == a)
+                    .copied()
                     .collect::<Vec<&Deposit>>(),
             )
         }));
@@ -185,6 +186,7 @@ pub fn match_patterns(
                 withdraws
                     .iter()
                     .filter(|d| d.receiver == a)
+                    .copied()
                     .collect::<Vec<&Withdraw>>(),
             )
         }));

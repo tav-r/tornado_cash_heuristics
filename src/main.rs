@@ -5,7 +5,7 @@ mod subcommands;
 
 use analysis::prepare::split_deposit_withdraw;
 use clap::{Arg, Command};
-use data::ESNormalTransaction;
+use data::{Deposit, ESNormalTransaction, Withdraw};
 use helpers::load_files;
 use subcommands::{address_matches, multiple_denomination};
 
@@ -36,6 +36,9 @@ fn main() {
             .collect::<Vec<&ESNormalTransaction>>(),
     );
 
+    let withdraw_refs: Vec<&Withdraw> = withdraws.iter().collect();
+    let deposit_refs: Vec<&Deposit> = deposits.iter().collect();
+
     // count deposits and withdraws
     println!(
         "loaded {} deposits, {} withdraws",
@@ -44,10 +47,10 @@ fn main() {
     );
 
     // address matches
-    address_matches(&deposits, &withdraws);
+    address_matches(&deposit_refs, &withdraw_refs);
 
     // multiple denomination
-    multiple_denomination(&deposits, &withdraws)
+    multiple_denomination(&deposit_refs, &withdraw_refs)
 
     // unique gas price
 
