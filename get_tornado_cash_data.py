@@ -2,7 +2,7 @@ import requests
 import json
 from os import environ
 from itertools import count
-from time import sleep
+from time import sleep, time
 from sys import exit as sys_exit, argv, stderr
 
 
@@ -65,6 +65,7 @@ def get_data(
     history = []
 
     while True:
+        t0 = time()
         response = account_transactions(
             api_key,
             address,
@@ -85,6 +86,9 @@ def get_data(
             break
 
         start_block = int(result[-1]["blockNumber"])
+        if api_key == "YourApiKeyToken":
+            t1 = 6 - (time() - t0)
+            sleep(t1 if t1 > 0 else 0)
 
     return history
 
