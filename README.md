@@ -14,14 +14,14 @@ The program in this repo implements two of these heuristics, namely those that
 The two heuristics implemented here are described in the next two subsections.
 
 ### Address Match Heuristic
-<img src="address_match.drawio.png" width="25%" height="25%">
+<img src="address_match.drawio.png" width="50%" height="50%">
 
 This heuristics looks for addresses that were used to make a deposit to a pool and were later used to make a withdraw from the same pool. It is likely that this mistake is most often made by unexperianced users that do not fully understand how Tornado Cash works. The fact that this mistake is more often made with lower amounts of ether speaks for this hypothesis.
 
 It is worth mentioning that in my implementation the assumption is made that we should not consider "same address" matches for withdrawals that do not use a relayer. Read up on more on [relayers](https://docs.tornado.cash/general/how-to-become-a-relayer) and [TORN mining](https://docs.tornado.cash/general/torn) to fully understand this assumption. For short: if you do not use a relayer when you withdraw ether, it is likely that you do not care about privacy and hence you might be in only for mining TORN.
 
 ### Multiple Denomination Heurisitc
-<img src="multiple_denomination.drawio.png" width="25%" height="25%">
+<img src="multiple_denomination.drawio.png" width="50%" height="50%">
 
 Here we look for unique patterns of deposits and withdrawals. The picture above illustrates it well: an address may deposit certain amounts and another address then withdraws the exact same amounts. If there is a unique "match", it is considered likely that both addresses are operated by the same person.
 
@@ -48,7 +48,7 @@ TORNADO_CASH_1ETH.json
 TORNADO_CASH_ROUTER.json
 ```
 
-### Running the application
+### Run the application
 The release build can be found at `./target/release/tornado_cash_heuristics`. You can get help in the usual way:
 ```bash
 $ ./target/release/tornado_cash_heuristics -h
