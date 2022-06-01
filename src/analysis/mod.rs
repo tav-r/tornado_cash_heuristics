@@ -1,27 +1,6 @@
 mod implementations;
 
 use hex_literal::hex;
-
-#[macro_export]
-macro_rules! hashstring {
-    ($l:expr) => {
-        format!(
-            "0x{}",
-            $l.as_bytes()
-                .iter()
-                .map(|b| format!("{:02x}", b))
-                .collect::<String>()
-        )
-    };
-}
-
-#[macro_export]
-macro_rules! immut_append {
-    ($l:expr, $a:expr) => {
-        $l.into_iter().chain([$a].into_iter()).collect()
-    };
-}
-
 pub mod analyze;
 pub mod prepare;
 

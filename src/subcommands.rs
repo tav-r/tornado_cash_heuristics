@@ -1,67 +1,15 @@
 use crate::analysis::analyze::{get_address_matches, match_patterns};
-use crate::data::{Deposit, Pool, Withdraw};
-use crate::{hashstring, immut_append};
+use crate::data::{Deposit, Withdraw};
+use crate::hashstring;
+use crate::helpers::collect_pools;
 
-fn put_into_pool<'a, T>(
-    _0_1eth: Vec<&'a T>,
-    _1eth: Vec<&'a T>,
-    _10eth: Vec<&'a T>,
-    _100eth: Vec<&'a T>,
-    pool: &Pool,
-    t: &'a T,
-) -> (Vec<&'a T>, Vec<&'a T>, Vec<&'a T>, Vec<&'a T>) {
-    match pool {
-        Pool::_0_1ETH => (immut_append!(_0_1eth, t), _1eth, _10eth, _100eth),
-        Pool::_1ETH => (_0_1eth, immut_append!(_1eth, t), _10eth, _100eth),
-        Pool::_10ETH => (_0_1eth, _1eth, immut_append!(_10eth, t), _100eth),
-        Pool::_100ETH => (_0_1eth, _1eth, _10eth, immut_append!(_100eth, t)),
-        _ => (_0_1eth, _1eth, _10eth, _100eth),
-    }
-}
-
-fn get_withdraws_by_pool<'a>(
-    withdraws: &[&'a Withdraw],
-) -> (
-    Vec<&'a Withdraw>,
-    Vec<&'a Withdraw>,
-    Vec<&'a Withdraw>,
-    Vec<&'a Withdraw>,
-) {
-    withdraws.iter().fold(
-        (vec![], vec![], vec![], vec![]),
-        |(_0_1, _1, _10, _100): (
-            Vec<&Withdraw>,
-            Vec<&Withdraw>,
-            Vec<&Withdraw>,
-            Vec<&Withdraw>,
-        ),
-         w| put_into_pool(_0_1, _1, _10, _100, &w.pool, w),
-    )
-}
-
-fn get_deposits_by_pool<'a>(
-    deposits: &[&'a Deposit],
-) -> (
-    Vec<&'a Deposit>,
-    Vec<&'a Deposit>,
-    Vec<&'a Deposit>,
-    Vec<&'a Deposit>,
-) {
-    deposits.iter().fold(
-        (vec![], vec![], vec![], vec![]),
-        |(_0_1, _1, _10, _100): (Vec<&Deposit>, Vec<&Deposit>, Vec<&Deposit>, Vec<&Deposit>), d| {
-            put_into_pool(_0_1, _1, _10, _100, &d.pool, d)
-        },
-    )
-}
-
+/// Find address matches and print results.
 pub fn address_matches(deposits: &[&Deposit], withdraws: &[&Withdraw], verbose: bool) {
     // address matches per pool
     // get deposits and withdraws by pool
-    let (dep_0_1_eth, dep_1_eth, dep_10_eth, dep_100_eth) = get_deposits_by_pool(deposits);
+    let (dep_0_1_eth, dep_1_eth, dep_10_eth, dep_100_eth) = collect_pools(deposits);
 
-    let (withd_0_1_eth, withd_1_eth, withd_10_eth, withd_100_eth) =
-        get_withdraws_by_pool(withdraws);
+    let (withd_0_1_eth, withd_1_eth, withd_10_eth, withd_100_eth) = collect_pools(withdraws);
 
     for (p, (d, w)) in ["0.1 ETH", "1 ETH", "10 ETH", "100 Eth"].into_iter().zip(
         [dep_0_1_eth, dep_1_eth, dep_10_eth, dep_100_eth]
@@ -95,6 +43,7 @@ pub fn address_matches(deposits: &[&Deposit], withdraws: &[&Withdraw], verbose: 
     }
 }
 
+// Find matching deposit/withdraw patterns and print results.
 pub fn multiple_denomination(deposits: &[&Deposit], withdraws: &[&Withdraw], verbose: bool) {
     let res = match_patterns(deposits, withdraws);
     println!("{} unique deposit/withdraw patterns found", res.len());

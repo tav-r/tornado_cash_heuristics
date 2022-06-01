@@ -49,7 +49,7 @@ fn main() {
         return;
     };
 
-    // load and parse transaction history files specified via command line, filter errors
+    // load and parse transaction history files specified via command line, filter out errors
     let files: Vec<&str> = matches
         .values_of("files")
         .expect("Please supply path(s) to transaction history file(s)")

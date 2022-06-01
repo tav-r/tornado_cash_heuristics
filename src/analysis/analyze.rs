@@ -1,5 +1,7 @@
 use super::DepositWithdrawPattern;
-use crate::data::{Deposit, InBlock, InPool, Pool, Withdraw};
+use crate::data::{Deposit, Withdraw};
+use crate::helpers::collect_pools;
+use crate::immut_append;
 use itertools::Itertools;
 use std::collections::HashMap;
 use web3::types::H160;
@@ -21,58 +23,6 @@ fn pattern_is_interesting(pattern: &DepositWithdrawPattern) -> bool {
         .filter(|e| *e > 0)
         .count()
             > 1
-}
-
-// put withdraws/withdraws into separate vectors for each pool
-fn collect_pools<'a, T: InPool + InBlock>(
-    ts: &[&'a T],
-) -> (Vec<&'a T>, Vec<&'a T>, Vec<&'a T>, Vec<&'a T>) {
-    ts.iter().copied().fold(
-        (vec![], vec![], vec![], vec![]),
-        |(_0_1eth, _1eth, _10eth, _100eth), t| match t.pool() {
-            Pool::_0_1ETH => (
-                _0_1eth
-                    .into_iter()
-                    .chain([t].into_iter())
-                    .sorted_by_key(|t| t.block())
-                    .collect(),
-                _1eth,
-                _10eth,
-                _100eth,
-            ),
-            Pool::_1ETH => (
-                _0_1eth,
-                _1eth
-                    .into_iter()
-                    .chain([t].into_iter())
-                    .sorted_by_key(|t| t.block())
-                    .collect(),
-                _10eth,
-                _100eth,
-            ),
-            Pool::_10ETH => (
-                _0_1eth,
-                _1eth,
-                _10eth
-                    .into_iter()
-                    .chain([t].into_iter())
-                    .sorted_by_key(|t| t.block())
-                    .collect(),
-                _100eth,
-            ),
-            Pool::_100ETH => (
-                _0_1eth,
-                _1eth,
-                _10eth,
-                _100eth
-                    .into_iter()
-                    .chain([t].into_iter())
-                    .sorted_by_key(|t| t.block())
-                    .collect(),
-            ),
-            Pool::Unknown => (_0_1eth, _1eth, _10eth, _100eth),
-        },
-    )
 }
 
 // check if each deposit to a pool was made before a withdraw from this pool
