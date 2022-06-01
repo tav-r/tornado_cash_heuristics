@@ -1,5 +1,5 @@
 # Heuristics to de-anonymize Tornado Cash users
-This code was written for the [Spring Semester Seminar in Cryptology and Data Security at the university of Bern](https://crypto.unibe.ch/courses/). If you are not interested in (or already know) the theoretical background and just want to run the program, see the [usage section](#usage) below.
+This code was written for the [Spring Semester Seminar in Cryptology and Data Security at the University of Bern](https://crypto.unibe.ch/courses/). If you are not interested in (or already know) the theoretical background and just want to run the program, see the [usage section](#usage) below.
 
 ## Tornado Cash
 [Tornado Cash](https://tornado.cash/) is a mixer for ethereum. Users can deposit ether to/withdraw ether from different pools (e.g., 0.1 ETH, 1 ETH, 10 ETH or 100 ETH). Technically, depositing is done by calling smart contracts with zk-SNARK commitments (zk-SNARK is a [Non-Interactive Zero Knowledge Proof](https://en.wikipedia.org/wiki/Non-interactive_zero-knowledge_proof) implementation). To withdraw ether, users provide a zk-SNARK proof, proving that they indeed have deposited some ether before (of course without revealing which commitment they have sent).
@@ -36,7 +36,7 @@ To get the latest blockchain data from [Etherscan](https://etherscan.io/), use [
 ```bash
 ETHERSCAN_API_KEY=YourApiKeyToken python get_tornado_cash_data.py
 ```
-**Notice that you can actually use "YourAoiKeyToken" as API key!** The script may, however, run faster, if you provide your own API key.
+**Notice that you can actually use "YourApiKeyToken" as API key!** The script may, however, run faster, if you provide your own API key.
 
 This will create five `.json` files in the current folder:
 ```bash
