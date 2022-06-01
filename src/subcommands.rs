@@ -5,7 +5,6 @@ use crate::helpers::collect_pools;
 
 /// Find address matches and print results.
 pub fn address_matches(deposits: &[&Deposit], withdraws: &[&Withdraw], verbose: bool) {
-    // address matches per pool
     // get deposits and withdraws by pool
     let (dep_0_1_eth, dep_1_eth, dep_10_eth, dep_100_eth) = collect_pools(deposits);
 
