@@ -1,6 +1,6 @@
 use crate::analysis::analyze::{get_address_matches, match_patterns};
 use crate::data::{Deposit, Pool, Withdraw};
-use crate::immut_append;
+use crate::{hashstring, immut_append};
 
 fn put_into_pool<'a, T>(
     _0_1eth: Vec<&'a T>,
@@ -55,7 +55,7 @@ fn get_deposits_by_pool<'a>(
     )
 }
 
-pub fn address_matches(deposits: &[&Deposit], withdraws: &[&Withdraw]) {
+pub fn address_matches(deposits: &[&Deposit], withdraws: &[&Withdraw], verbose: bool) {
     // address matches per pool
     // get deposits and withdraws by pool
     let (dep_0_1_eth, dep_1_eth, dep_10_eth, dep_100_eth) = get_deposits_by_pool(deposits);
@@ -75,10 +75,37 @@ pub fn address_matches(deposits: &[&Deposit], withdraws: &[&Withdraw]) {
             p,
             d.len(), w.len()
         );
+
+        if verbose {
+            res.iter().for_each(|(a, (ds, ws))| {
+                println!(
+                    "{} deposited at {} and withdrew at {}",
+                    hashstring!(a),
+                    ds.iter()
+                        .map(|d| hashstring!(d.transaction_hash))
+                        .collect::<Vec<String>>()
+                        .join(", "),
+                    ws.iter()
+                        .map(|w| hashstring!(w.transaction_hash))
+                        .collect::<Vec<String>>()
+                        .join(", "),
+                )
+            })
+        }
     }
 }
 
-pub fn multiple_denomination(deposits: &[&Deposit], withdraws: &[&Withdraw]) {
+pub fn multiple_denomination(deposits: &[&Deposit], withdraws: &[&Withdraw], verbose: bool) {
     let res = match_patterns(deposits, withdraws);
     println!("{} unique deposit/withdraw patterns found", res.len());
+
+    if verbose {
+        res.iter().for_each(|(a, b, _)| {
+            println!(
+                "{} and {} have the same deposit/withdraw pattern",
+                hashstring!(a),
+                hashstring!(b)
+            )
+        });
+    }
 }
